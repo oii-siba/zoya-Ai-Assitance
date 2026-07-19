@@ -156,13 +156,13 @@ export class LiveSession {
             functionDeclarations: [
               {
                 name: 'openWebsite',
-                description: 'Opens a given website URL in a new browser tab. Use this tool whenever the user asks you to open a page, browse, search, or view a website.',
+                description: 'Opens a given website URL or search query page in a new browser tab. If the user asks to search for something, construct a Google search URL (e.g. https://www.google.com/search?q=query) and pass it here.',
                 parameters: {
                   type: 'OBJECT',
                   properties: {
                     url: {
                       type: 'STRING',
-                      description: 'The URL of the website to open (e.g. google.com, youtube.com, github.com). Must be fully qualified or direct.',
+                      description: 'The fully qualified URL to open. For searches, use https://www.google.com/search?q=search+terms. Must start with http:// or https://.',
                     },
                   },
                   required: ['url'],
