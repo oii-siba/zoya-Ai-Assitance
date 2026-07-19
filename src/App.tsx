@@ -69,11 +69,12 @@ function App() {
     });
 
     session.onOpenWebsite((url) => {
-      // 1. Try to open it in a new tab first
+      // 1. Try to open it in a new window/tab
       const newTab = window.open(url, '_blank', 'noopener,noreferrer');
       if (!newTab || newTab.closed || typeof newTab.closed === 'undefined') {
-        // Tab was blocked by popup blocker, navigate the current tab directly so it opens completely automatically!
-        window.location.href = url;
+        // Tab was blocked by popup blocker, show our overlay prompt so they can open in a new tab
+        setPendingUrl(url);
+        setStatusMessage(`Popup blocked! Click the banner or allow popups in your browser address bar.`);
       } else {
         // Tab opened successfully (user already allowed popups)
         setLastToolCall(`Opened website: ${url}`);
