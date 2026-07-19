@@ -39,6 +39,7 @@ function App() {
   const [statusMessage, setStatusMessage] = useState<string>('Ready to start Zoya session.');
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [lastToolCall, setLastToolCall] = useState<string | null>(null);
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
 
   const sessionRef = useRef<LiveSession | null>(null);
 
@@ -56,12 +57,26 @@ function App() {
       setStatusMessage(msg);
 
       // Sniff tool call events to show on-screen tool alerts
-      if (msg.includes('Successfully opened website')) {
-        const match = msg.match(/opened website:\s*(https?:\/\/\S+)/i);
+      if (msg.includes('Successfully triggered open website for:')) {
+        const match = msg.match(/open website for:\s*(\S+)/i);
         if (match) {
-          setLastToolCall(`Opened website: ${match[1]}`);
+          setLastToolCall(`Opening website: ${match[1]}`);
           setTimeout(() => setLastToolCall(null), 5000);
         }
+      }
+    });
+
+    session.onOpenWebsite((url) => {
+      // 1. Try to open it
+      const newTab = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!newTab || newTab.closed || typeof newTab.closed === 'undefined') {
+        // Tab was blocked, open our overlay prompt
+        setPendingUrl(url);
+        setStatusMessage(`Popup blocked by browser. Please click the banner to open: ${url}`);
+      } else {
+        // Tab opened successfully (user already allowed popups)
+        setLastToolCall(`Opened website: ${url}`);
+        setTimeout(() => setLastToolCall(null), 5000);
       }
     });
 
@@ -251,6 +266,44 @@ function App() {
         config={config}
         onSave={handleSaveConfig}
       />
+
+      {/* Popup Blocker Fallback Prompt */}
+      {pendingUrl && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 flex items-center justify-center p-6 animate-fade-in">
+          <div className="w-full max-w-sm border border-purple-500/30 bg-neutral-900/90 rounded-2xl p-6 shadow-[0_0_30px_rgba(168,85,247,0.3)] text-center space-y-4 animate-scale-in">
+            <div className="w-12 h-12 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto border border-purple-500/30 text-purple-400">
+              <ExternalLink className="w-6 h-6 animate-pulse" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-white font-bold tracking-wide">Open Website</h3>
+              <p className="text-xs text-neutral-400 leading-normal">
+                Zoya wants to open a link in a new tab:
+              </p>
+              <p className="text-sm font-mono text-purple-300 break-all select-all font-semibold mt-1">
+                {pendingUrl}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingUrl(null)}
+                className="flex-1 py-2.5 px-4 bg-neutral-800 hover:bg-neutral-700 active:scale-95 text-neutral-300 text-sm font-semibold rounded-xl transition-all cursor-pointer border border-neutral-700"
+              >
+                Cancel
+              </button>
+              <a
+                href={pendingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setPendingUrl(null)}
+                className="flex-1 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 active:scale-95 text-white text-sm font-bold rounded-xl transition-all cursor-pointer shadow-[0_4px_15px_rgba(168,85,247,0.4)] flex items-center justify-center gap-1.5 text-center leading-none"
+              >
+                Open Link
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

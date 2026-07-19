@@ -8,6 +8,7 @@ export class LiveSession {
   private config: LiveSessionConfig | null = null;
   private onStateChangeCallback: ((state: SessionState) => void) | null = null;
   private onStatusMessageCallback: ((message: string) => void) | null = null;
+  private onOpenWebsiteCallback: ((url: string) => void) | null = null;
 
   constructor() {
     this.audioStreamer = new AudioStreamer();
@@ -19,6 +20,10 @@ export class LiveSession {
 
   public onStatusMessage(callback: (message: string) => void): void {
     this.onStatusMessageCallback = callback;
+  }
+
+  public onOpenWebsite(callback: (url: string) => void): void {
+    this.onOpenWebsiteCallback = callback;
   }
 
   private updateState(newState: SessionState): void {
@@ -274,14 +279,16 @@ export class LiveSession {
           url = `https://${url}`;
         }
         
-        // Open the website in a new window/tab
-        window.open(url, '_blank', 'noopener,noreferrer');
+        // Notify the callback (UI will handle window.open and fallback popup overlays)
+        if (this.onOpenWebsiteCallback) {
+          this.onOpenWebsiteCallback(url);
+        }
         
         // Respond to the tool call immediately
         this.sendToolResponse(call.id, { success: true, openedUrl: url });
-        this.logStatus(`Successfully opened website: ${url}`);
+        this.logStatus(`Successfully triggered open website for: ${url}`);
       } catch (error) {
-        console.error('Failed to open website:', error);
+        console.error('Failed to execute openWebsite callback:', error);
         this.sendToolResponse(call.id, { success: false, error: (error as Error).message });
       }
     } else {
