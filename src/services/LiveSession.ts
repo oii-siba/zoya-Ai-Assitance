@@ -312,7 +312,10 @@ export class LiveSession {
    */
   private async callLocalControlApi(action: string, payload: Record<string, any> = {}): Promise<{ success: boolean; error?: string; message?: string }> {
     try {
-      const url = new URL('/api/control', window.location.origin);
+      const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const apiBase = isLocalHost ? window.location.origin : 'http://localhost:5173';
+      
+      const url = new URL('/api/control', apiBase);
       url.searchParams.append('action', action);
       Object.entries(payload).forEach(([key, val]) => {
         if (val !== undefined && val !== null) {
