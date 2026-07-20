@@ -312,10 +312,16 @@ export class LiveSession {
    */
   private async callLocalControlApi(action: string, payload: Record<string, any> = {}): Promise<{ success: boolean; error?: string; message?: string }> {
     try {
-      const response = await fetch('/api/control', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, ...payload }),
+      const url = new URL('/api/control', window.location.origin);
+      url.searchParams.append('action', action);
+      Object.entries(payload).forEach(([key, val]) => {
+        if (val !== undefined && val !== null) {
+          url.searchParams.append(key, String(val));
+        }
+      });
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
       });
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -344,7 +350,19 @@ export class LiveSession {
           url = `https://${url}`;
         }
         
-        // Notify the callback (UI will handle window.open and fallback popup overlays)
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (!isMobile) {
+          // On PC, open the website via the companion server to bypass browser popup blocker overlay
+          const res = await this.callLocalControlApi('open-url', { url });
+          if (res.success) {
+            this.sendToolResponse(call.id, { success: true, openedViaCompanion: true, openedUrl: url });
+            this.logStatus(`Successfully opened website via companion: ${url}`);
+            return;
+          }
+        }
+
+        // Mobile or fallback: Notify the callback (UI will handle window.open and fallback popup overlays)
         if (this.onOpenWebsiteCallback) {
           this.onOpenWebsiteCallback(url);
         }

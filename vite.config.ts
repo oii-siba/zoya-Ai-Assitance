@@ -6,6 +6,20 @@ import fs from 'fs'
 import path from 'path'
 import os from 'os'
 
+// Helper to find the actual active Desktop path (handles OneDrive)
+function getDesktopPath() {
+  const home = os.homedir();
+  const onedriveDesktop = path.join(home, 'OneDrive', 'Desktop');
+  if (fs.existsSync(onedriveDesktop)) {
+    return onedriveDesktop;
+  }
+  const onedriveDesktopAlternative = path.join(home, 'OneDrive - Personal', 'Desktop');
+  if (fs.existsSync(onedriveDesktopAlternative)) {
+    return onedriveDesktopAlternative;
+  }
+  return path.join(home, 'Desktop');
+}
+
 // Custom Vite plugin for system commands execution
 function systemControlPlugin() {
   return {
@@ -15,7 +29,7 @@ function systemControlPlugin() {
         if (req.url && req.url.startsWith('/api/control')) {
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Access-Control-Allow-Origin', '*');
-          res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+          res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
           res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
           if (req.method === 'OPTIONS') {
@@ -24,27 +38,15 @@ function systemControlPlugin() {
             return;
           }
 
-          // Parse query parameter or body
+          // Parse query parameters
           const urlObj = new URL(req.url, 'http://localhost');
           const action = urlObj.searchParams.get('action');
+          const folderName = urlObj.searchParams.get('folderName');
+          const siteTitle = urlObj.searchParams.get('siteTitle') || 'Zoya Generated Site';
+          const appName = urlObj.searchParams.get('appName') || '';
+          const targetUrl = urlObj.searchParams.get('url') || '';
 
-          let body: any = {};
-          if (req.method === 'POST') {
-            try {
-              const buffers: Buffer[] = [];
-              for await (const chunk of req) {
-                buffers.push(chunk);
-              }
-              const bodyStr = Buffer.concat(buffers).toString();
-              body = JSON.parse(bodyStr);
-            } catch (e) {
-              console.error('Error parsing JSON body:', e);
-            }
-          }
-
-          const finalAction = action || body.action;
-
-          if (finalAction === 'shutdown') {
+          if (action === 'shutdown') {
             const platform = os.platform();
             let command = '';
             if (platform === 'win32') {
@@ -67,10 +69,7 @@ function systemControlPlugin() {
             return;
           }
 
-          if (finalAction === 'create-site') {
-            const folderName = body.folderName || urlObj.searchParams.get('folderName');
-            const siteTitle = body.siteTitle || urlObj.searchParams.get('siteTitle') || 'Zoya Generated Site';
-
+          if (action === 'create-site') {
             if (!folderName) {
               res.statusCode = 400;
               res.end(JSON.stringify({ success: false, error: 'folderName is required' }));
@@ -78,7 +77,7 @@ function systemControlPlugin() {
             }
 
             const cleanFolderName = folderName.replace(/[^a-zA-Z0-9-_ ]/g, '_');
-            const desktopPath = path.join(os.homedir(), 'Desktop');
+            const desktopPath = getDesktopPath();
             const projectPath = path.join(desktopPath, cleanFolderName);
 
             try {
@@ -194,8 +193,7 @@ function systemControlPlugin() {
             return;
           }
 
-          if (finalAction === 'open-app') {
-            const appName = (body.appName || urlObj.searchParams.get('appName') || '').trim();
+          if (action === 'open-app') {
             if (!appName) {
               res.statusCode = 400;
               res.end(JSON.stringify({ success: false, error: 'appName is required' }));
@@ -242,6 +240,34 @@ function systemControlPlugin() {
                 return;
               }
               res.end(JSON.stringify({ success: true, message: `Opened app: ${appName}` }));
+            });
+            return;
+          }
+
+          if (action === 'open-url') {
+            if (!targetUrl) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ success: false, error: 'url is required' }));
+              return;
+            }
+
+            const platform = os.platform();
+            let command = '';
+            if (platform === 'win32') {
+              command = `start "" "${targetUrl}"`;
+            } else if (platform === 'darwin') {
+              command = `open "${targetUrl}"`;
+            } else {
+              command = `xdg-open "${targetUrl}"`;
+            }
+
+            exec(command, (err) => {
+              if (err) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ success: false, error: err.message }));
+                return;
+              }
+              res.end(JSON.stringify({ success: true, message: `Opened URL: ${targetUrl}` }));
             });
             return;
           }
