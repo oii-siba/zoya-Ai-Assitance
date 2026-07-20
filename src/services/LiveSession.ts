@@ -168,6 +168,47 @@ export class LiveSession {
                   required: ['url'],
                 },
               },
+              {
+                name: 'shutdownPC',
+                description: 'Triggers a PC shutdown sequence. Use this if the user asks you to shutdown, turn off, or power off their PC/computer.',
+                parameters: {
+                  type: 'OBJECT',
+                  properties: {},
+                  required: [],
+                },
+              },
+              {
+                name: 'createFolderAndWebsite',
+                description: 'Creates a new folder on the user\'s desktop with a boilerplate website project (HTML, CSS, JS) and opens the folder. Use this when the user asks you to create a website, create a web project, or make a new directory for a website.',
+                parameters: {
+                  type: 'OBJECT',
+                  properties: {
+                    folderName: {
+                      type: 'STRING',
+                      description: 'The name of the folder to create on the desktop (e.g., test-website). Use simple names, no spaces.',
+                    },
+                    siteTitle: {
+                      type: 'STRING',
+                      description: 'The header/title of the website.',
+                    },
+                  },
+                  required: ['folderName'],
+                },
+              },
+              {
+                name: 'openApp',
+                description: 'Opens a specific local application on the PC (e.g. Chrome, Notepad, Calculator, VS Code) or deep-links to apps on mobile (e.g. Spotify, YouTube, WhatsApp).',
+                parameters: {
+                  type: 'OBJECT',
+                  properties: {
+                    appName: {
+                      type: 'STRING',
+                      description: 'The name of the application to open (e.g., calculator, notepad, spotify, chrome, whatsapp).',
+                    },
+                  },
+                  required: ['appName'],
+                },
+              },
             ],
           },
         ],
@@ -267,9 +308,33 @@ export class LiveSession {
   }
 
   /**
+   * Helper to request backend system controls hosted on the Vite dev server.
+   */
+  private async callLocalControlApi(action: string, payload: Record<string, any> = {}): Promise<{ success: boolean; error?: string; message?: string }> {
+    try {
+      const response = await fetch('/api/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, ...payload }),
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        return { success: false, error: errData.error || `HTTP error ${response.status}` };
+      }
+      return await response.json();
+    } catch (e) {
+      console.error('Local control API fetch failed:', e);
+      return {
+        success: false,
+        error: 'Failed to communicate with Zoya local server. Ensure the app is running with "npm run dev".',
+      };
+    }
+  }
+
+  /**
    * Executes tool calls requested by the model
    */
-  private executeToolCall(call: { name: string; args: Record<string, any>; id: string }): void {
+  private async executeToolCall(call: { name: string; args: Record<string, any>; id: string }): Promise<void> {
     this.logStatus(`Executing tool call: ${call.name} with args: ${JSON.stringify(call.args)}`);
 
     if (call.name === 'openWebsite') {
@@ -289,6 +354,64 @@ export class LiveSession {
         this.logStatus(`Successfully triggered open website for: ${url}`);
       } catch (error) {
         console.error('Failed to execute openWebsite callback:', error);
+        this.sendToolResponse(call.id, { success: false, error: (error as Error).message });
+      }
+    } else if (call.name === 'shutdownPC') {
+      try {
+        const res = await this.callLocalControlApi('shutdown');
+        this.sendToolResponse(call.id, res);
+        this.logStatus(`Shutdown PC response: ${JSON.stringify(res)}`);
+      } catch (error) {
+        this.sendToolResponse(call.id, { success: false, error: (error as Error).message });
+      }
+    } else if (call.name === 'createFolderAndWebsite') {
+      try {
+        const res = await this.callLocalControlApi('create-site', {
+          folderName: call.args.folderName,
+          siteTitle: call.args.siteTitle,
+        });
+        this.sendToolResponse(call.id, res);
+        this.logStatus(`Create site project response: ${JSON.stringify(res)}`);
+      } catch (error) {
+        this.sendToolResponse(call.id, { success: false, error: (error as Error).message });
+      }
+    } else if (call.name === 'openApp') {
+      try {
+        const appName = call.args.appName || '';
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+          const lowerApp = appName.toLowerCase();
+          let scheme = '';
+          if (lowerApp.includes('spotify')) scheme = 'spotify://';
+          else if (lowerApp.includes('youtube')) scheme = 'youtube://';
+          else if (lowerApp.includes('whatsapp')) scheme = 'whatsapp://';
+          else if (lowerApp.includes('facebook') || lowerApp.includes('fb')) scheme = 'fb://';
+          else if (lowerApp.includes('instagram')) scheme = 'instagram://';
+          else if (lowerApp.includes('twitter') || lowerApp.includes('x.com')) scheme = 'twitter://';
+          else if (lowerApp.includes('chrome')) scheme = 'googlechrome://';
+          else if (lowerApp.includes('gmail')) scheme = 'googlegmail://';
+          else if (lowerApp.includes('maps') || lowerApp.includes('google maps')) scheme = 'googlemaps://';
+
+          if (scheme) {
+            window.open(scheme, '_self');
+            this.sendToolResponse(call.id, { success: true, message: `Opened mobile app scheme: ${scheme}` });
+            this.logStatus(`Successfully triggered mobile app scheme: ${scheme}`);
+          } else {
+            // Mobile app fallback to search
+            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(appName)}`;
+            if (this.onOpenWebsiteCallback) {
+              this.onOpenWebsiteCallback(searchUrl);
+            }
+            this.sendToolResponse(call.id, { success: true, message: 'App scheme not matched. Opened web search instead.', fallbackUrl: searchUrl });
+          }
+        } else {
+          // PC application execution
+          const res = await this.callLocalControlApi('open-app', { appName });
+          this.sendToolResponse(call.id, res);
+          this.logStatus(`Open app response: ${JSON.stringify(res)}`);
+        }
+      } catch (error) {
         this.sendToolResponse(call.id, { success: false, error: (error as Error).message });
       }
     } else {

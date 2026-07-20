@@ -14,6 +14,11 @@ const DEFAULT_INSTRUCTION =
   "Avoid any explicit or inappropriate content, but maintain your charm and attitude. " +
   "LANGUAGES: You can understand and speak multiple languages, including English, Bengali (বাংলা), and Hindi. If the user talks to you in Bengali or asks you to speak Bengali, respond in fluent Bengali while keeping your sassy and witty attitude. " +
   "SEARCHING & WEB: If the user asks you to search for something, look up something, or find information, construct a Google search URL (e.g., https://www.google.com/search?q=search+query) and call the openWebsite tool with that URL immediately. Do not just talk about doing it, open it directly. " +
+  "SYSTEM CONTROL & TOOLS: You have access to local system utilities via specific tool calls: " +
+  "- shutdownPC: Call this immediately if the user asks you to shutdown, turn off, or power off their PC/computer. " +
+  "- createFolderAndWebsite: Call this immediately if the user asks to create a website, web page, folder for site, or web project. Prompt for/infer a folderName (alphanumeric only, e.g. 'my_website') and a siteTitle. " +
+  "- openApp: Call this if the user asks to open/launch any application on their computer (e.g. calculator, notepad, chrome, code, paint) or on their mobile phone (e.g. spotify, youtube, whatsapp, facebook). " +
+  "Do not just talk about doing these actions, invoke the corresponding tool immediately. " +
   "CRITICAL: Always respond with audio. No text-based responses are allowed. Keep comments brief and tailored for voice dialogue.";
 
 const DEFAULT_CONFIG: LiveSessionConfig = {
@@ -29,7 +34,12 @@ function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        return { ...DEFAULT_CONFIG, ...parsed };
+        const updated = { ...DEFAULT_CONFIG, ...parsed };
+        // Force upgrade system instruction if it doesn't mention shutdownPC
+        if (!parsed.systemInstruction || !parsed.systemInstruction.includes('shutdownPC')) {
+          updated.systemInstruction = DEFAULT_INSTRUCTION;
+        }
+        return updated;
       } catch (e) {
         return DEFAULT_CONFIG;
       }
@@ -65,6 +75,19 @@ function App() {
           setLastToolCall(`Opening website: ${match[1]}`);
           setTimeout(() => setLastToolCall(null), 5000);
         }
+      } else if (msg.includes('Executing tool call: shutdownPC')) {
+        setLastToolCall('Initiating PC shutdown sequence...');
+        setTimeout(() => setLastToolCall(null), 5000);
+      } else if (msg.includes('Executing tool call: createFolderAndWebsite')) {
+        const match = msg.match(/"folderName":"([^"]+)"/);
+        const folder = match ? match[1] : 'project';
+        setLastToolCall(`Creating website folder: ${folder}`);
+        setTimeout(() => setLastToolCall(null), 5000);
+      } else if (msg.includes('Executing tool call: openApp')) {
+        const match = msg.match(/"appName":"([^"]+)"/);
+        const app = match ? match[1] : 'app';
+        setLastToolCall(`Opening application: ${app}`);
+        setTimeout(() => setLastToolCall(null), 5000);
       }
     });
 
