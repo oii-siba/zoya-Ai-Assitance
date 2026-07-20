@@ -68,8 +68,8 @@ function systemControlPlugin() {
             const platform = os.platform();
             let command = '';
             if (platform === 'win32') {
-              // 15 seconds shutdown delay with warning message
-              command = 'shutdown /s /t 15 /c "Zoya AI is shutting down your PC in 15 seconds. Run shutdown /a to cancel."';
+              // Immediate shutdown
+              command = 'shutdown /s /t 0';
             } else if (platform === 'darwin') {
               command = 'osascript -e "tell app \\"System Events\\" to shut down"';
             } else {
