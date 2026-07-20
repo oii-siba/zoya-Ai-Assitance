@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { exec } from 'child_process'
+import { exec, spawn } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
@@ -18,6 +18,24 @@ function getDesktopPath() {
     return onedriveDesktopAlternative;
   }
   return path.join(home, 'Desktop');
+}
+
+// Spawns a program in a detached background process to prevent blocking Node's server response
+function runCommandDetached(command: string) {
+  const platform = os.platform();
+  let child;
+  if (platform === 'win32') {
+    child = spawn('cmd.exe', ['/c', command], {
+      detached: true,
+      stdio: 'ignore'
+    });
+  } else {
+    child = spawn('sh', ['-c', command], {
+      detached: true,
+      stdio: 'ignore'
+    });
+  }
+  child.unref();
 }
 
 // Custom Vite plugin for system commands execution
@@ -221,26 +239,13 @@ function systemControlPlugin() {
               command = `xdg-open "${appName}"`;
             }
 
-            exec(command, (err) => {
-              if (err) {
-                // If direct start fails on Windows, try running it directly
-                if (platform === 'win32') {
-                  exec(`start ${appName}`, (err2) => {
-                    if (err2) {
-                      res.statusCode = 500;
-                      res.end(JSON.stringify({ success: false, error: err2.message }));
-                      return;
-                    }
-                    res.end(JSON.stringify({ success: true, message: `Opened app: ${appName}` }));
-                  });
-                  return;
-                }
-                res.statusCode = 500;
-                res.end(JSON.stringify({ success: false, error: err.message }));
-                return;
-              }
+            try {
+              runCommandDetached(command);
               res.end(JSON.stringify({ success: true, message: `Opened app: ${appName}` }));
-            });
+            } catch (err: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
             return;
           }
 
@@ -261,14 +266,13 @@ function systemControlPlugin() {
               command = `xdg-open "${targetUrl}"`;
             }
 
-            exec(command, (err) => {
-              if (err) {
-                res.statusCode = 500;
-                res.end(JSON.stringify({ success: false, error: err.message }));
-                return;
-              }
+            try {
+              runCommandDetached(command);
               res.end(JSON.stringify({ success: true, message: `Opened URL: ${targetUrl}` }));
-            });
+            } catch (err: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
             return;
           }
 
