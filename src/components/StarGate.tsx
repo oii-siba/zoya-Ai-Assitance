@@ -16,17 +16,15 @@ export const StarGate: React.FC<StarGateProps> = ({
   children
 }) => {
   const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
-  const [hasClickedStar, setHasClickedStar] = useState<boolean>(false);
   const [githubUsername, setGithubUsername] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
-  const [allowBypass, setAllowBypass] = useState<boolean>(false);
 
   const repoUrl = `https://github.com/${repoOwner}/${repoName}`;
 
   useEffect(() => {
-    // Check if previously unlocked in localStorage
+    // Check if previously verified in localStorage
     const saved = localStorage.getItem('zoya_starred_verified');
     if (saved === 'true') {
       setIsUnlocked(true);
@@ -34,7 +32,6 @@ export const StarGate: React.FC<StarGateProps> = ({
   }, []);
 
   const handleOpenRepo = () => {
-    setHasClickedStar(true);
     window.open(repoUrl, '_blank', 'noopener,noreferrer');
   };
 
@@ -56,71 +53,61 @@ export const StarGate: React.FC<StarGateProps> = ({
       return;
     }
 
-    // Owner bypass
-    if (username.toLowerCase() === repoOwner.toLowerCase()) {
-      handleUnlock(username);
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
-      // 1. Try checking user's starred list (most accurate)
-      const userStarredRes = await fetch(
-        `https://api.github.com/users/${encodeURIComponent(username)}/starred?per_page=100`,
-        { headers: { Accept: 'application/vnd.github.v3+json' } }
-      );
+      let isStarred = false;
 
-      if (userStarredRes.ok) {
-        const starred = await userStarredRes.json();
-        const found = Array.isArray(starred) && starred.some((item: any) => {
-          const matchRepo = item?.name?.toLowerCase() === repoName.toLowerCase();
-          const matchOwner = item?.owner?.login?.toLowerCase() === repoOwner.toLowerCase();
-          return matchRepo && matchOwner;
-        });
-
-        if (found) {
-          handleUnlock(username);
-          return;
-        }
-      }
-
-      // 2. Try checking repo stargazers
+      // 1. Check repo stargazers list (direct check from repository)
       const stargazersRes = await fetch(
-        `https://api.github.com/repos/${repoOwner}/${repoName}/stargazers?per_page=100`,
+        `https://api.github.com/repos/${repoOwner}/${repoName}/stargazers?per_page=100&t=${Date.now()}`,
         { headers: { Accept: 'application/vnd.github.v3+json' } }
       );
 
       if (stargazersRes.ok) {
         const gazers = await stargazersRes.json();
-        const foundInGaz = Array.isArray(gazers) && gazers.some(
-          (user: any) => user?.login?.toLowerCase() === username.toLowerCase()
+        if (Array.isArray(gazers)) {
+          isStarred = gazers.some(
+            (user: any) => user?.login?.toLowerCase() === username.toLowerCase()
+          );
+        }
+      }
+
+      // 2. If not found yet, also check the user's starred repositories list
+      if (!isStarred) {
+        const userStarredRes = await fetch(
+          `https://api.github.com/users/${encodeURIComponent(username)}/starred?per_page=100&t=${Date.now()}`,
+          { headers: { Accept: 'application/vnd.github.v3+json' } }
         );
 
-        if (foundInGaz) {
-          handleUnlock(username);
+        if (userStarredRes.ok) {
+          const starred = await userStarredRes.json();
+          if (Array.isArray(starred)) {
+            isStarred = starred.some((item: any) => {
+              const matchRepo = item?.name?.toLowerCase() === repoName.toLowerCase();
+              const matchOwner = item?.owner?.login?.toLowerCase() === repoOwner.toLowerCase();
+              const matchFull = item?.full_name?.toLowerCase() === `${repoOwner.toLowerCase()}/${repoName.toLowerCase()}`;
+              return (matchRepo && matchOwner) || matchFull;
+            });
+          }
+        } else if (userStarredRes.status === 404) {
+          setError(`"${username}" নামের কোনো GitHub অ্যাকাউন্ট পাওয়া যায়নি। ইউজারনেম সঠিক কিনা চেক করুন।`);
           return;
         }
       }
 
-      // If rate limited or forbidden (GitHub unauthenticated rate limit is 60 req/hr)
-      if (userStarredRes.status === 403 || stargazersRes.status === 403) {
-        setAllowBypass(true);
-        setError('GitHub API সীমা সাময়িকভাবে পূর্ণ! আপনি যদি Star দিয়ে থাকেন, নিচের আনলক বাটনে ক্লিক করুন।');
+      if (isStarred) {
+        handleUnlock(username);
         return;
       }
 
-      // If user not found or not starred
-      if (userStarredRes.status === 404) {
-        setError(`"${username}" নামের কোনো GitHub অ্যাকাউন্ট পাওয়া যায়নি। বানানে ভুল নেই তো?`);
-      } else {
-        setAllowBypass(true);
-        setError('আপনার Star এখনো খুঁজে পাওয়া যায়নি! অনুগ্রহ করে রিপোজিটরিতে Star দিয়ে কয়েক সেকেন্ড পর আবার ভেরিফাই করুন।');
-      }
+      // If strictly not starred
+      setError(
+        `"${username}" অ্যাকাউন্ট থেকে এখনো Star পাওয়া যায়নি! অনুগ্রহ করে উপরে "GitHub-এ Star দিন" বাটনে ক্লিক করে Star ⭐ দিন এবং ৫-১০ সেকেন্ড পর আবার Verify করুন।`
+      );
     } catch (err: any) {
-      setAllowBypass(true);
-      setError('ইন্টারনেট বা GitHub সংযোগে সমস্যা। আপনি Star দিয়ে থাকলে নিচের বাটনে ক্লিক করে সরাসরি আনলক করতে পারেন।');
+      setError('ইন্টারনেট বা GitHub সংযোগে সমস্যা হচ্ছে। কিছুক্ষণ পর আবার চেষ্টা করুন।');
     } finally {
       setLoading(false);
     }
@@ -220,17 +207,6 @@ export const StarGate: React.FC<StarGateProps> = ({
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
                   <span>{error}</span>
                 </div>
-              )}
-
-              {/* Graceful unlock button if API rate limit or Star button clicked */}
-              {(allowBypass || hasClickedStar) && (
-                <button
-                  onClick={() => handleUnlock(githubUsername || 'guest')}
-                  className="w-full mt-3 py-2 px-3 bg-neutral-800/60 hover:bg-emerald-950/40 hover:border-emerald-600/50 border border-neutral-700/60 text-neutral-300 hover:text-emerald-300 rounded-xl text-xs font-medium transition flex items-center justify-center gap-1.5"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>আমি Star দিয়েছি, সরাসরি আনলক করুন</span>
-                </button>
               )}
             </div>
 
