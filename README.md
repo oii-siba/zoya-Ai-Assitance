@@ -3,6 +3,7 @@
 [![React 19](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-8.1-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-4.3-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Google Gemini Live](https://img.shields.io/badge/Google-Gemini_Live_API-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -46,52 +47,52 @@ Before running this project, ensure you have the following installed on your mac
 
 ## 🚀 Getting Started (Installation & Setup)
 
-Anyone can clone and run this repository locally by following these simple steps:
+You can run Zoya AI Assistance locally using either the **One-Click Launcher (Windows)** or standard **Terminal commands (Mac, Linux, Windows)**:
 
-### 1. Clone the Repository
+### 🌟 Method A: One-Click Launcher (Windows - Recommended)
 
+1. Clone or download this repository.
+2. Inside the folder, simply **double-click `start.bat`**.
+3. It will automatically check Node.js, install dependencies (`npm install`), configure environment files, and start the development server!
+
+---
+
+### 💻 Method B: Terminal Setup (Mac, Linux & Windows)
+
+#### Step 1: Clone the Repository
 ```bash
 git clone https://github.com/oii-siba/zoya-Ai-Assitance.git
 cd zoya-Ai-Assitance
 ```
 
-### 2. Install Dependencies
-
+#### Step 2: Install Dependencies
 ```bash
 npm install
 ```
 
-### 3. Setup Environment Variables (Optional)
-
-Copy the sample environment file:
-
-```bash
-cp .env.example .env
-```
-
-*(Note: If you have a Hugging Face token, you can add it into `.env`. The main Gemini Live API key can be entered directly in the web UI settings without editing code).*
-
-### 4. Run the Development Server
-
+#### Step 3: Run the Development Server
 ```bash
 npm run dev
 ```
 
-> 🌟 **Note**: To support the project, on the first run the terminal will verify that you have given a Star ⭐ to this repository. Once verified, it unlocks and starts the Vite development server!
+> 🌟 **Note**: To support the project, on the very first run the terminal will verify that you have given a Star ⭐ to this repository. Once verified, it unlocks and starts the Vite development server!
 
 The application will start, usually at:
 ```
 http://localhost:5173
 ```
 
-### 5. Configure Your Gemini API Key
+---
 
-1. Open your browser and navigate to `http://localhost:5173`.
-2. Click the **Settings (⚙️)** icon in the top header.
-3. **Personalize Your Name & Title**: In the **User Identity** section, enter your own name and title (e.g., your name, and whether Zoya should call you Boss, Bhaiya, Sir, or Friend). Zoya will automatically adapt all spoken greetings and voice prompts to your name!
-4. Paste your **Gemini API Key** from [Google AI Studio](https://aistudio.google.com/).
-5. Select your preferred voice, model, and personality tone.
-6. Click **Save & Connect** and start speaking with Zoya!
+### ⚙️ Quick Configuration Guide
+
+1. Open your browser and go to `http://localhost:5173`.
+2. When prompted by your browser, click **Allow Microphone Access** (required for voice conversation).
+3. Click the **Settings (⚙️)** icon in the top-right header:
+   - **Your Name & Title**: In the **User Identity** section, enter your own name and title (e.g., your name, and whether Zoya should call you Boss, Bhaiya, Sir, or Friend). Zoya will automatically adapt all spoken greetings to your name!
+   - **Gemini API Key**: Paste your free Gemini API Key from [Google AI Studio](https://aistudio.google.com/).
+   - **Voice Persona**: Choose your preferred voice and personality tone (Cute Girl, Sassy BFF, Cyber Butler, etc.).
+4. Click **Save & Connect** and start speaking with Zoya!
 
 ---
 

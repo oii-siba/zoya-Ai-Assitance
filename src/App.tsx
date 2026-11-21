@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Settings as SettingsIcon, Mic, MicOff, AlertCircle, ExternalLink, Moon, PhoneOff, Keyboard, X, MessageSquare, AlarmClock, Volume2, VolumeX, Star } from 'lucide-react';
+import { Settings as SettingsIcon, Mic, MicOff, AlertCircle, ExternalLink, Moon, PhoneOff, Keyboard, X, MessageSquare, AlarmClock, Volume2, VolumeX } from 'lucide-react';
 import { LiveSession } from './services/LiveSession';
 import { SettingsOverlay } from './components/SettingsOverlay';
 import { Waveform } from './components/Waveform';
@@ -1347,16 +1347,6 @@ CRITICAL MANDATORY INSTRUCTIONS FOR ZOYA:
           >
             <Keyboard className="w-5 h-5" />
           </button>
-
-          <a
-            href="https://github.com/oii-siba/zoya-Ai-Assitance"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-3 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-400 text-amber-400 rounded-2xl transition-all duration-200 active:scale-95 cursor-pointer shadow-lg flex items-center justify-center"
-            title="Star on GitHub ⭐"
-          >
-            <Star className="w-5 h-5 fill-amber-400/20" />
-          </a>
 
           <button
             onClick={() => {
