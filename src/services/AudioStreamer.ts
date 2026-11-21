@@ -1,4 +1,6 @@
 import { floatTo16BitPCM, arrayBufferToBase64, base64ToArrayBuffer } from './AudioUtils';
+import { voiceBiometrics } from './VoiceBiometrics';
+import { emotionDetector } from './EmotionDetector';
 
 export class AudioStreamer {
   private inputContext: AudioContext | null = null;
@@ -11,6 +13,12 @@ export class AudioStreamer {
   private nextPlayTime = 0;
   private onAudioInputCallback: ((base64Pcm: string) => void) | null = null;
   private isRecording = false;
+  private isPaused = false;
+  
+  // Voice Biometrics & Multi-Speaker settings
+  private strangerDetected = false;
+  private strangerStreak = 0;
+  private lastStrangerSpeechTime = 0;
 
   constructor() {}
 
@@ -80,6 +88,12 @@ export class AudioStreamer {
       throw new Error('AudioStreamer not initialized. Call init() first.');
     }
 
+    // Load Voice Biometrics profiles from localStorage
+    voiceBiometrics.loadProfiles();
+    this.strangerDetected = false;
+    this.strangerStreak = 0;
+    this.lastStrangerSpeechTime = 0;
+
     try {
       this.micStream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -97,10 +111,60 @@ export class AudioStreamer {
       const micSource = this.inputContext.createMediaStreamSource(this.micStream);
       micSource.connect(this.inputAnalyser);
 
+      this.isPaused = false;
+
       this.workletNode = new AudioWorkletNode(this.inputContext, 'audio-input-processor');
       this.workletNode.port.onmessage = (event) => {
         if (!this.isRecording) return;
+        if (this.isPaused) return;
         const float32Data = event.data as Float32Array;
+
+        // Perform biometric multi-speaker recognition
+        const profiles = voiceBiometrics.getProfiles();
+        if (profiles.length > 0) {
+          const savedSens = parseInt(localStorage.getItem('zoya_boss_sensitivity') || '70', 10);
+          const sensitivity = isNaN(savedSens) ? 70 : savedSens;
+          const recResult = voiceBiometrics.identifySpeaker(float32Data, 16000, sensitivity);
+          
+          if (recResult.status !== 'silence') {
+            window.dispatchEvent(new CustomEvent('zoya-speaker-identified', {
+              detail: recResult
+            }));
+
+            if (recResult.status === 'stranger') {
+              this.strangerStreak++;
+              if (this.strangerStreak >= 8) {
+                if (!this.strangerDetected) {
+                  this.strangerDetected = true;
+                  console.warn(`[AudioStreamer] Stranger voice detected! Confidence: ${recResult.confidence}%`);
+                }
+                this.lastStrangerSpeechTime = Date.now();
+              }
+            } else if (recResult.status === 'boss') {
+              // Boss detected - immediately clear stranger suspicion
+              this.strangerStreak = 0;
+            } else {
+              // Enrolled friend/guest profile detected
+              this.strangerStreak = Math.max(0, this.strangerStreak - 1);
+            }
+          }
+        }
+
+        // Handle silence timeout when stranger was speaking
+        if (this.strangerDetected && Date.now() - this.lastStrangerSpeechTime > 1500) {
+          this.strangerDetected = false;
+          this.strangerStreak = 0;
+          window.dispatchEvent(new CustomEvent('zoya-stranger-detected'));
+        }
+
+        // Real-time Voice Emotion Detection
+        try {
+          emotionDetector.analyzeFrame(float32Data, 16000);
+        } catch (e) {
+          console.error('[AudioStreamer] Emotion analysis error:', e);
+        }
+
+        // Stream raw audio to AI
         const int16PCM = floatTo16BitPCM(float32Data);
         const base64Pcm = arrayBufferToBase64(int16PCM.buffer);
         if (this.onAudioInputCallback) {
@@ -128,6 +192,7 @@ export class AudioStreamer {
    */
   public stopRecording(): void {
     this.isRecording = false;
+    this.isPaused = false;
 
     if (this.workletNode) {
       this.workletNode.disconnect();
@@ -138,6 +203,37 @@ export class AudioStreamer {
       this.micStream.getTracks().forEach((track) => track.stop());
       this.micStream = null;
     }
+  }
+
+  /**
+   * Pauses microphone input stream.
+   */
+  public pauseRecording(): void {
+    this.isPaused = true;
+    if (this.micStream) {
+      this.micStream.getAudioTracks().forEach((track) => {
+        track.enabled = false;
+      });
+    }
+  }
+
+  /**
+   * Resumes microphone input stream.
+   */
+  public resumeRecording(): void {
+    this.isPaused = false;
+    if (this.micStream) {
+      this.micStream.getAudioTracks().forEach((track) => {
+        track.enabled = true;
+      });
+    }
+  }
+
+  /**
+   * Checks if microphone recording is paused.
+   */
+  public isPausedRecording(): boolean {
+    return this.isPaused;
   }
 
   /**
@@ -225,6 +321,7 @@ export class AudioStreamer {
     this.outputAnalyser.getByteFrequencyData(dataArray);
     return dataArray;
   }
+
 
   /**
    * Cleanup everything

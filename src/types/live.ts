@@ -3,9 +3,34 @@ export interface LiveSessionConfig {
   model: string;
   voiceName: string;
   systemInstruction: string;
+  userName?: string;
+  userTitle?: string;
+  whatsappEnabled?: boolean;
+  whatsappShowBanner?: boolean;
+  whatsappLanguage?: 'bn-IN' | 'en-IN' | 'en-US' | 'hi-IN';
+  whatsappAnnounceContent?: boolean;
+  whatsappSpeechRate?: number;
+  whatsappSpeechPitch?: number;
+  whatsappAlertSound?: 'beep' | 'chime' | 'ding' | 'none';
+  whatsappIgnoreGroups?: boolean;
+  visualizerTheme?: 'neon-quantum' | 'cosmic-nebula' | 'retro-equalizer' | 'stellar-orbit' | 'liquid-aura';
+  voicePersona?: 'cute-girl' | 'sassy-bff' | 'cyber-assistant' | 'anime-sister' | 'playful-puppy' | 'kid-voice' | 'female-voice' | 'sweet-female';
+  announcerVoiceName?: string;
 }
 
 export type SessionState = 'disconnected' | 'connecting' | 'listening' | 'speaking';
+
+export type VoiceEmotionType = 'calm' | 'excited' | 'sad' | 'stressed' | 'whisper' | 'neutral';
+
+export interface VoiceEmotionState {
+  emotion: VoiceEmotionType;
+  confidence: number;
+  label: string;
+  emoji: string;
+  pitch: number;
+  rms: number;
+  updatedAt: number;
+}
 
 // Outgoing messages
 export interface SetupMessage {
@@ -30,7 +55,7 @@ export interface SetupMessage {
         description: string;
         parameters: {
           type: 'OBJECT';
-          properties: Record<string, { type: 'STRING'; description: string }>;
+          properties: Record<string, any>;
           required: string[];
         };
       }>;
@@ -65,7 +90,17 @@ export interface ToolResponseMessage {
   };
 }
 
-export type OutgoingMessage = SetupMessage | RealtimeInputMessage | ToolResponseMessage;
+export interface ClientContentMessage {
+  clientContent: {
+    turns: Array<{
+      role: 'user' | 'model';
+      parts: Array<{ text: string }>;
+    }>;
+    turnComplete: boolean;
+  };
+}
+
+export type OutgoingMessage = SetupMessage | RealtimeInputMessage | ToolResponseMessage | ClientContentMessage;
 
 // Incoming messages
 export interface ServerContentPart {

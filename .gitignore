@@ -12,6 +12,23 @@ dist
 dist-ssr
 *.local
 
+# Environment variables & secrets
+.env
+.env*.local
+*.key
+*.pem
+
+# WhatsApp session data & credentials
+whatsapp_auth/
+lid-mapping-*.json
+tctoken-*.json
+contacts.json
+
+# C# build artifacts
+scripts/*.dll
+scripts/*.exe
+*.pdb
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
