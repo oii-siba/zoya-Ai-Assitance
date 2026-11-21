@@ -4,6 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/check-star.mjs",
+    "prestart": "node scripts/check-star.mjs",
     "start": "vite",
     "dev": "vite",
     "build": "tsc -b && vite build",

@@ -29,6 +29,9 @@ scripts/*.dll
 scripts/*.exe
 *.pdb
 
+# Local star verification lock
+.star_verified
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

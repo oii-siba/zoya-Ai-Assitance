@@ -77,6 +77,8 @@ cp .env.example .env
 npm run dev
 ```
 
+> 🌟 **Note**: To support the project, on the first run the terminal will verify that you have given a Star ⭐ to this repository. Once verified, it unlocks and starts the Vite development server!
+
 The application will start, usually at:
 ```
 http://localhost:5173
