@@ -1,167 +1,216 @@
-# 🌸 Zoya AI Assistance
+<p align="center">
+  <img src="public/zoya.png" width="160" height="160" style="border-radius: 50%; box-shadow: 0 0 35px rgba(168, 85, 247, 0.6); border: 3px solid rgba(236, 72, 153, 0.4);" alt="Zoya AI Assistance Logo" />
+</p>
 
-[![React 19](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-8.1-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+<h1 align="center">🌸 ZOYA AI ASSISTANCE</h1>
 
-[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-4.3-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Google Gemini Live](https://img.shields.io/badge/Google-Gemini_Live_API-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<p align="center">
+  <strong>The Next-Generation Real-Time Multimodal Voice AI & Autonomous Desktop Companion</strong><br>
+  <em>Powered by Google Gemini Multimodal Live API • Real-Time Voice-to-Voice • Acoustic Empathy • WhatsApp Baileys • Windows OS Automation</em>
+</p>
 
-**Zoya AI Assistance** is an advanced, ultra-responsive, real-time voice-to-voice multimodal AI assistant powered by Google Gemini Live API. Featuring real-time acoustic empathy, voice biometrics, natural Bengali and English conversation, desktop automation, and WhatsApp integration.
+<p align="center">
+  <a href="https://github.com/oii-siba/zoya-Ai-Assitance/stargazers"><img src="https://img.shields.io/github/stars/oii-siba/zoya-Ai-Assitance?style=for-the-badge&logo=github&color=ffd700&label=Stars" alt="GitHub Stars" /></a>
+  <a href="https://github.com/oii-siba/zoya-Ai-Assitance/network/members"><img src="https://img.shields.io/github/forks/oii-siba/zoya-Ai-Assitance?style=for-the-badge&logo=github&color=6366f1&label=Forks" alt="GitHub Forks" /></a>
+  <a href="https://github.com/oii-siba/zoya-Ai-Assitance/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-emerald?style=for-the-badge" alt="License" /></a>
+  <a href="https://ai.google.dev/"><img src="https://img.shields.io/badge/Google-Gemini_Live_API-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Gemini Live API" /></a>
+</p>
 
----
-
-## ✨ Features
-
-- 🎙️ **Real-Time Voice-to-Voice Streaming**: Ultra-low-latency, full-duplex conversational audio powered directly by the Google Gemini Live WebSocket API (`models/gemini-2.0-flash-exp` / `gemini-3.1-flash-live-preview`).
-- 💖 **Acoustic Emotion Intelligence (Emotion Engine)**: Detects the emotional state in your voice (happy, sad, tired, angry, whispering, calm) and adapts its tone with comforting care or joyful energy.
-- 👤 **Voice Biometrics & Speaker Identification**: Recognizes its creator ("Siba Boss") vs. other speakers, seamlessly adapting greeting protocol and responses.
-- ⏰ **Smart Alarm & Voice Scheduler**: Hands-free voice commands to set alarms or timed wake-up calls with spoken morning reminders.
-- 🌊 **Audio Waveform Visualizer**: Smooth, real-time visual representation of both user microphone input and assistant voice output.
-- 💻 **Desktop Automation (Windows)**: Built-in PowerShell and C# automation scripts to interact with local apps and perform fast OS controls.
-- 📱 **WhatsApp Integration (Baileys)**: Automated WhatsApp messaging and connection handling via `@whiskeysockets/baileys`.
-- 🌐 **Multilingual Mastery**: Native, articulate fluency in Bengali (বাংলা), English, and Hindi.
-
----
-
-## 🛠️ Tech Stack
-
-- **Frontend**: [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/), [Lucide React](https://lucide.dev/)
-- **Audio Processing**: Web Audio API (PCM 16-bit 16kHz AudioWorklet / Streaming)
-- **AI Brain**: Google Gemini Multimodal Live WebSocket API
-- **Automation & Services**: Node.js, Baileys, PowerShell, C# (.NET)
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19.2-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-6.0-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Vite-8.1-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/TailwindCSS-v4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind CSS v4" />
+  <img src="https://img.shields.io/badge/Platform-Windows_10_|_11-0078D6?style=flat-square&logo=windows&logoColor=white" alt="Windows 10/11" />
+  <img src="https://img.shields.io/badge/Multilingual-বাংলা_|_English_|_Hindi-ec4899?style=flat-square" alt="Multilingual" />
+</p>
 
 ---
 
-## 📋 Prerequisites
+## 🌟 Overview
 
-Before running this project, ensure you have the following installed on your machine:
+**Zoya AI Assistance** is not just another chatbot—it is an ultra-low-latency, full-duplex, multimodal AI companion that talks, listens, empathizes, and controls your operating system hands-free.
 
-- **[Node.js](https://nodejs.org/)** (v18.0.0 or higher recommended, e.g. Node 20 LTS or 22)
-- **npm** (comes with Node.js) or **pnpm** / **yarn**
-- **Google Gemini API Key**: Get a free API key from [Google AI Studio](https://aistudio.google.com/).
+Built on Google's breakthrough **Gemini Multimodal Live WebSocket API**, Zoya processes raw bidirectional audio in real time. She speaks fluent Bengali (বাংলা), English, and Hindi, understands human emotion from vocal acoustics, handles background WhatsApp messaging, automates Windows applications, and manages smart wake-up alarms—all with a sweet, lively, and intelligent personality.
+
+> 💬 *"Hello! আমি জয়া, আপনার পার্সোনাল ভয়েস এআই অ্যাসিস্ট্যান্ট। বলুন, আজ আপনাকে কীভাবে সাহায্য করতে পারি?"*
 
 ---
 
-## 🚀 Getting Started (Installation & Setup)
+## 🚀 Key Innovations & Superpowers
 
-You can run Zoya AI Assistance locally using either the **One-Click Launcher (Windows)** or standard **Terminal commands (Mac, Linux, Windows)**:
+| Feature | Description |
+|---|---|
+| 🎙️ **Full-Duplex Live Voice** | Direct bidirectional Web Audio streaming via WebSocket. Zero text intermediate delay—talk naturally and interrupt whenever you want! |
+| 💖 **Acoustic Emotion Intelligence** | Proprietary emotion engine perceives vocal tone (Happy, Sad, Stressed, Whisper, Calm) and immediately adapts response empathy and volume. |
+| 👤 **Dynamic Identity & Name Customization** | Set your own name and title (*Boss, Bhaiya, Sir, Buddy*) directly from Settings. Zoya remembers and greets you personally! |
+| 📱 **Background WhatsApp (Baileys)** | Send WhatsApp messages and announce incoming notifications hands-free via mobile-connected Baileys engine without opening windows. |
+| 💻 **Complete Windows Desktop Automation** | Launch software (VS Code, Chrome, Notepad, Calculator), search & play YouTube songs, scroll web pages, manage system volume, sleep, and shutdown. |
+| ⏰ **Smart Spoken Alarms** | Voice-scheduled reminders and wake-up calls with spoken Bengali announcements and snooze/dismiss controls. |
+| 🤫 **Intelligent Standby ("চুপ মোড")** | Tell Zoya *"চুপ করো"* and she goes completely silent while you talk to friends or take phone calls. Resume instantly with *"জয়া বলো"*. |
+| 🌊 **Futuristic Cyberpunk Visualizer** | Real-time particle waveform with multiple visual themes: *Neon Quantum, Cyberpunk Violet, Matrix Green, Hologram Blue, Retro HUD*. |
+| 🔒 **StarGate™ Community Lock** | Open-source safeguard ensuring every user stars the repository to support the creator before first launch. |
+
+---
+
+## 🎭 Voice Personas
+
+Choose between 6 handcrafted persona models to match your conversational vibe:
+
+| Persona | Archetype | Tone & Behavioral Style |
+|:---:|:---:|---|
+| 👧 **Cute Zoya** *(Default)* | Cute Little Sister | Sweet, cheerful, affectionate, and protective assistant |
+| 💖 **Sweet Female** | Warm Companion | Soft, gentle, calming voice with high emotional empathy |
+| 👶 **Kid Voice** | Playful Kid Helper | Innocent, energetic, enthusiastic helper voice |
+| 👩‍💼 **Prof. Female** | Executive Assistant | Sharp, professional, articulate, and direct |
+| 💅 **Sassy BFF** | Witty Best Friend | Playful, humorous, sarcastic wit and modern banter |
+| 🤖 **Cyber Butler** | JARVIS / Sci-Fi Butler | Sophisticated, formal, robotic-futuristic efficiency |
+
+---
+
+## 🏗️ Architecture & How It Works
+
+```mermaid
+flowchart TD
+    UserMic[🎙️ User Microphone] --> AudioWorklet[AudioWorklet: 16kHz PCM Stream]
+    AudioWorklet --> WebSocket[Secure WebSocket Channel]
+    WebSocket --> GeminiLive[🧠 Google Gemini Multimodal Live API]
+    
+    GeminiLive --> ToolCalls{Tool Calling Decision}
+    ToolCalls -->|Desktop Control| FastControl[⚡ Windows FastControl Daemon / PowerShell]
+    ToolCalls -->|WhatsApp| BaileysEngine[📱 Baileys WhatsApp Daemon]
+    ToolCalls -->|Alarm / Timer| AlarmScheduler[⏰ Web Audio Alarm Scheduler]
+    ToolCalls -->|Direct Conversation| AudioOut[🔊 Web Audio API PCM Stream]
+    
+    AudioOut --> Waveform[🌊 Cyberpunk Audio Visualizer]
+    Waveform --> Speaker[🎧 User Speaker / Headset]
+    
+    FastControl --> FastOut[OS Apps / Media Playback / Window Actions]
+    FastOut --> GeminiLive
+```
+
+---
+
+## ⚡ Quick Start & Installation
+
+Getting Zoya running on your machine takes less than **2 minutes**!
 
 ### 🌟 Method A: One-Click Launcher (Windows - Recommended)
 
 1. Clone or download this repository.
-2. Inside the folder, simply **double-click `start.bat`**.
-3. It will automatically check Node.js, install dependencies (`npm install`), configure environment files, and start the development server!
+2. In the project folder, simply **double-click `start.bat`**.
+3. That's it! `start.bat` will:
+   - Check if Node.js is installed
+   - Auto-install all project dependencies (`npm install`)
+   - Create local `.env` configuration file
+   - Launch the development server automatically!
 
 ---
 
 ### 💻 Method B: Terminal Setup (Mac, Linux & Windows)
 
-#### Step 1: Clone the Repository
 ```bash
+# 1. Clone the repository
 git clone https://github.com/oii-siba/zoya-Ai-Assitance.git
 cd zoya-Ai-Assitance
-```
 
-#### Step 2: Install Dependencies
-```bash
+# 2. Install dependencies
 npm install
-```
 
-#### Step 3: Run the Development Server
-```bash
+# 3. Launch development server
 npm run dev
 ```
 
-> 🌟 **Note**: To support the project, on the very first run the terminal will verify that you have given a Star ⭐ to this repository. Once verified, it unlocks and starts the Vite development server!
+> ⭐ **Star Verification**: On the first launch, Zoya will verify that you have given a Star to our repository. Enter your GitHub username when prompted to unlock your session!
 
-The application will start, usually at:
-```
-http://localhost:5173
-```
+Visit **`http://localhost:5173`** in your browser.
 
 ---
 
-### ⚙️ Quick Configuration Guide
+## ⚙️ Initial Setup & Configuration
 
-1. Open your browser and go to `http://localhost:5173`.
-2. When prompted by your browser, click **Allow Microphone Access** (required for voice conversation).
-3. Click the **Settings (⚙️)** icon in the top-right header:
-   - **Your Name & Title**: In the **User Identity** section, enter your own name and title (e.g., your name, and whether Zoya should call you Boss, Bhaiya, Sir, or Friend). Zoya will automatically adapt all spoken greetings to your name!
-   - **Gemini API Key**: Paste your free Gemini API Key from [Google AI Studio](https://aistudio.google.com/).
-   - **Voice Persona**: Choose your preferred voice and personality tone (Cute Girl, Sassy BFF, Cyber Butler, etc.).
-4. Click **Save & Connect** and start speaking with Zoya!
+Once the web interface opens:
 
----
-
-## 📦 Available Scripts
-
-In the project directory, you can run:
-
-| Command | Description |
-|---|---|
-| `npm run dev` | Runs the Vite dev server at `http://localhost:5173` with Hot Module Replacement (HMR). |
-| `npm run build` | Compiles TypeScript and builds the production bundle in `/dist`. |
-| `npm run preview` | Locally previews the production build. |
-| `npm run lint` | Runs [Oxlint](https://oxc.rs) to quickly lint TypeScript/React source files. |
+1. **Allow Microphone Access**: Click **Allow** when the browser asks for mic permissions.
+2. **Open Settings (⚙️)**:
+   - **User Identity**: Enter your name (e.g. `Rahul`) and title (e.g. `Boss`, `Bhaiya`, `Sir`).
+   - **Gemini API Key**: Paste your free API key from [Google AI Studio](https://aistudio.google.com/).
+   - **Voice Persona**: Select your favorite voice persona.
+3. Click **Save & Connect**—Zoya is now awake and listening!
 
 ---
 
-## 📱 Optional Features
+## 🗣️ Voice Commands Cheat Sheet
 
-### WhatsApp Integration (Baileys)
-To start the WhatsApp automated assistant service:
+Speak naturally to Zoya in **Bengali, English, or Hindi**! Here are some fun examples:
 
-```bash
-node scripts/whatsapp_baileys.mjs
-```
-A QR code will appear in your terminal. Scan it from your WhatsApp mobile app (`Linked Devices`) to authenticate.
+### 🎵 Entertainment & Media
+- *"Zoya, ekta Arijit Singh er gaan chalao"* (Searches and plays top song on YouTube)
+- *"Zoya, porer gaan ta dao"* (Skips to the next video)
+- *"Gaan ta pause koro"* / *"Abar play koro"* (Pauses / resumes YouTube playback)
 
-> ⚠️ **Note**: Your WhatsApp session tokens are stored locally in `whatsapp_auth/` and are excluded from Git for privacy and security.
+### 📱 WhatsApp Messaging
+- *"Zoya, amader friend Sourav ke WhatsApp-e 'kothay tui?' bole message pathao"*
+- *"Sourav ke 3 bar 'urgent call me' pathao"* (Repeats message 3 times)
 
-### Windows Desktop Automation
-The `scripts/` folder includes PowerShell scripts and C# utilities for Windows-specific voice controls:
-- `scripts/desktop_automation.ps1`
-- `scripts/compile_dll.ps1`
+### ⏰ Alarms & Wake-up Calls
+- *"Zoya, amake shokal 7:00 tay deke dio"*
+- *"Amake 15 minute por dakbe"*
+
+### 💻 OS & Laptop Control
+- *"Calculator open koro"* / *"Chrome chalu koro"* / *"VS Code kholo"*
+- *"Volume 80% koro"* / *"Volume mute koro"*
+- *"Page ta niche scroll koro"*
+- *"Laptop ta sleep mode-e dao"* / *"PC shutdown koro"*
+
+### 🤫 Privacy & Standby Mode
+- *"Zoya, ektu chup koro"* (Zoya enters silent standby mode)
+- *"Zoya bolo"* (Zoya resumes active conversation)
 
 ---
 
-## 📂 Project Structure
+## 📁 Repository Directory Structure
 
 ```text
 zoya-ai-assistance/
-├── public/                 # Static assets (images, icons)
-├── scripts/                # WhatsApp Baileys & Windows automation scripts
+├── public/                 # Static branding, avatars & sound effects
+├── scripts/
+│   ├── check-star.mjs      # Terminal pre-dev StarGate verification
+│   ├── whatsapp_baileys.mjs # Background WhatsApp headless client
+│   ├── desktop_automation.ps1 # Windows OS automation engine
+│   └── ZoyaFastControl.cs  # High-performance C# Win32 automation daemon
 ├── src/
-│   ├── components/         # React UI components (SettingsOverlay, Waveform, etc.)
-│   ├── services/           # Core audio streaming, LiveSession, EmotionDetector, Alarms
-│   ├── types/              # TypeScript type definitions (live.ts, etc.)
-│   ├── App.tsx             # Main application orchestrator & voice state manager
-│   ├── App.css             # Main stylesheet & animations
-│   └── main.tsx            # Application entrypoint
-├── .env.example            # Environment variables template
-├── .gitignore              # Files excluded from git (credentials, auth keys)
-├── package.json            # Project manifest & dependencies
-├── vite.config.ts          # Vite configuration
-└── README.md               # Project documentation
+│   ├── components/
+│   │   ├── SettingsOverlay.tsx # Identity, voice, and API settings modal
+│   │   ├── StarGate.tsx        # In-browser GitHub star verification lock
+│   │   └── Waveform.tsx        # High-FPS canvas particle audio visualizer
+│   ├── services/
+│   │   ├── LiveSession.ts      # WebSocket manager for Gemini Multimodal Live API
+│   │   ├── EmotionDetector.ts  # Acoustic vocal emotion analysis engine
+│   │   ├── VoiceBiometrics.ts  # Speaker identification & voice lock
+│   │   └── AlarmScheduler.ts   # Persistent spoken alarm scheduler
+│   ├── utils/
+│   │   └── personality.ts      # Dynamic user identity prompt adapter
+│   ├── App.tsx                 # Main application UI orchestrator
+│   └── main.tsx                # React DOM entrypoint
+├── start.bat               # 1-Click Windows launcher & auto-installer
+├── package.json            # Project dependencies & scripts
+└── vite.config.ts          # Vite configuration & backend proxy tools
 ```
 
 ---
 
-## 🔒 Security & Privacy Notice
+## 🔒 Security & Privacy First
 
-- **Never commit `.env` or API keys** to GitHub.
-- **Never commit `whatsapp_auth/`** or generated session `.json` files.
-- The included `.gitignore` already protects your sensitive files from being pushed accidentally.
+- 🛡️ **Zero Secret Leaks**: All personal API keys, passwords, and tokens are stored solely in your local browser's encrypted `localStorage` or `.env` file.
+- 🛡️ **Safe WhatsApp Storage**: WhatsApp connection sessions in `whatsapp_auth/` are strictly ignored by `.gitignore`.
+- 🛡️ **No Private Passcodes**: Fully open-source and customizable without any hardcoded credentials.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome!
-Feel free to check out the [issues page](https://github.com/oii-siba/zoya-Ai-Assitance/issues).
+Contributions make the open-source community an amazing place to learn, inspire, and create! Any contributions you make are **greatly appreciated**.
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
@@ -171,10 +220,24 @@ Feel free to check out the [issues page](https://github.com/oii-siba/zoya-Ai-Ass
 
 ---
 
-## 📄 License
+## 🌟 Show Your Support
 
-This project is licensed under the [MIT License](LICENSE).
+If you like **Zoya AI Assistance**, please give this repository a **Star ⭐**! It motivates continuous development and helps more developers discover the power of real-time voice AI.
+
+<p align="center">
+  <a href="https://github.com/oii-siba/zoya-Ai-Assitance">
+    <img src="https://img.shields.io/badge/⭐_Star_This_Repository-oii--siba%2Fzoya--Ai--Assitance-ffd700?style=for-the-badge&logo=github" alt="Star on GitHub" />
+  </a>
+</p>
 
 ---
 
-Made with ❤️ by [Siba](https://github.com/oii-siba)
+## 📄 License
+
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
+
+---
+
+<p align="center">
+  Made with 💖 by <strong><a href="https://github.com/oii-siba">Siba</a></strong>
+</p>
