@@ -221,7 +221,7 @@ function App() {
         if (!updated.whatsappSpeechPitch || updated.whatsappSpeechPitch > 1.25) {
           updated.whatsappSpeechPitch = 1.0;
         }
-        // Force upgrade system instruction if it doesn't mention gorgeous HTML file, getCurrentTime, full stack project, zero placeholders, readWebpage, strict passcode shutdown instructions (06032008), sleep passcode (19102007), mother passcode (12369), Suchitra, keyboard passcode input, WhatsApp msg rules, count support, or code confidentiality
+        // Force upgrade system instruction if it doesn't mention latest features
         if (
           !parsed.systemInstruction ||
           !parsed.systemInstruction.includes('gorgeous HTML file') ||
@@ -538,10 +538,10 @@ function App() {
           setTimeout(() => setLastToolCall(null), 5000);
         }
       } else if (msg.includes('Executing tool call: shutdownPC')) {
-        setLastToolCall('Passcode 06032008 verified: Initiating PC shutdown...');
+        setLastToolCall('Initiating PC shutdown...');
         setTimeout(() => setLastToolCall(null), 5000);
       } else if (msg.includes('Executing tool call: sleepPC')) {
-        setLastToolCall('Passcode 19102007 verified: Initiating PC sleep mode...');
+        setLastToolCall('Initiating PC sleep mode...');
         setTimeout(() => setLastToolCall(null), 5000);
       } else if (msg.includes('Shutdown PC rejected') || msg.includes('Shutdown PC blocked')) {
         setLastToolCall('⚠️ Shutdown blocked: Secret passcode required');
@@ -1506,7 +1506,7 @@ CRITICAL MANDATORY INSTRUCTIONS FOR ZOYA:
                 {ringingAlarm.timeString}
               </h2>
               <p className="text-xs font-semibold text-neutral-300 leading-relaxed px-2">
-                "শিবা বস! শিবা বস! ঘুম থেকে উঠুন, সকাল {ringingAlarm.timeString} বেজে গেছে! আমি জয়া ডাকছি, উঠে পড়ুন!"
+                "{config.userName || 'Boss'}! ঘুম থেকে উঠুন, সকাল {ringingAlarm.timeString} বেজে গেছে! আমি জয়া ডাকছি, উঠে পড়ুন!"
               </p>
             </div>
 
