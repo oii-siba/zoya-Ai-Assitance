@@ -564,8 +564,11 @@ function App() {
         const messageMatch = msg.match(/"message":"([^"]+)"/);
         const contact = contactMatch ? contactMatch[1] : 'contact';
         const messageText = messageMatch ? messageMatch[1] : '';
-        setLastToolCall(`Sending WhatsApp to ${contact}: "${messageText}"`);
+        setLastToolCall(`📱 Sending WhatsApp to ${contact}: "${messageText}"`);
         setTimeout(() => setLastToolCall(null), 5000);
+      } else if (msg.includes('হোয়াটসঅ্যাপ সংযুক্ত নেই') || msg.includes('Direct Mobile WhatsApp is not connected')) {
+        setLastToolCall('⚠️ হোয়াটসঅ্যাপ সংযুক্ত নেই! উপরের সবুজ আইকনে ক্লিক করে QR স্ক্যান করুন।');
+        setTimeout(() => setLastToolCall(null), 7000);
       } else if (msg.includes('Executing tool call: addContact')) {
         const match = msg.match(/"name":"([^"]+)"/);
         const name = match ? match[1] : 'contact';

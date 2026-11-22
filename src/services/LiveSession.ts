@@ -573,7 +573,7 @@ export class LiveSession {
               },
               {
                 name: 'sendWhatsAppMessage',
-                description: 'Sends a WhatsApp message in the background WITHOUT opening any web browser or visible app on the screen. Used for both: 1) Replying to incoming messages: When replying to the person who just messaged Siba Boss (e.g. Siba Boss says "উনাকে বলো...", "উনাকে পাঠাও...", "বলো..."), pass the sender\'s name or "reply" as contactNameOrNumber and the reply text as message. 2) Proactive messaging: When Siba Boss asks to message anyone (e.g. "Sahil ke WhatsApp message pathao je..."). CRITICAL: If Siba Boss says to send or reply but has NOT yet given the message text (e.g. he only says "হ্যাঁ", "হ্যাঁ পাঠাও", "রিপ্লাই দাও", "উনাকে মেসেজ পাঠাও", "মেসেজ পাঠাও"), DO NOT call this tool! You MUST verbally ask Siba Boss in clear Bengali: "কী মেসেজ পাঠাবো, শিবা বস? বলুন, আমি লিখে পাঠিয়ে দিচ্ছি!" and wait for him to speak the message! CRITICAL: If Siba Boss says NOT to send anything ("না কিছু পাঠাতে হবে না", "না দরকার নেই", "কিছু পাঠিও না"), DO NOT call this tool!',
+                description: 'Sends a WhatsApp message in the background WITHOUT opening any window or browser on the screen. Call this tool whenever the user asks to send a WhatsApp message, message someone on WhatsApp, or reply to someone (e.g. "Sahil ke WhatsApp message pathao je ami ashchi", "সাহিলকে মেসেজ করো আমি ৫ মিনিটে আসছি", "WhatsApp-e message pathao", "উনাকে বলো..."). Pass the target contact name or phone number as contactNameOrNumber and the message text as message.',
                 parameters: {
                   type: 'OBJECT',
                   properties: {
@@ -1509,10 +1509,10 @@ export class LiveSession {
         } else {
           // Intercept and prevent opening laptop WhatsApp Desktop app
           if (appName.includes('whatsapp')) {
-            this.logStatus('Intercepted openApp for WhatsApp: Laptop WhatsApp is disabled. Prompting direct background messaging.');
+            this.logStatus('Intercepted openApp for WhatsApp: Direct background messaging is active.');
             this.sendToolResponse(call.id, {
               success: false,
-              error: 'Laptop WhatsApp is disabled because Siba Boss\'s laptop WhatsApp does not work properly. Please use sendWhatsAppMessage directly to send messages in the background via his mobile connection without opening any window!'
+              instruction: 'Desktop WhatsApp app is not needed. Ask the user warmly in Bengali: "কাকে এবং কী মেসেজ পাঠাবেন বলুন, আমি সরাসরি ব্যাকগ্রাউন্ডে পাঠিয়ে দিচ্ছি!" and call sendWhatsAppMessage tool.'
             });
             return;
           }
@@ -1531,9 +1531,12 @@ export class LiveSession {
         const message = String(call.args.message || '').trim();
         
         if (!message) {
+          if (contact) {
+            this.lastTargetContact = contact;
+          }
           this.sendToolResponse(call.id, {
             success: false,
-            error: 'No message content provided. Ask Siba Boss: "কী মেসেজ পাঠাবো, শিবা বস? বলুন, আমি লিখে পাঠিয়ে দিচ্ছি!"'
+            instruction: `Target contact "${contact || this.lastTargetContact || 'the person'}" is noted. Sweetly ask the user in Bengali: "কী মেসেজ পাঠাবো বলুন, আমি লিখে পাঠিয়ে দিচ্ছি!" and wait for their spoken message.`
           });
           return;
         }

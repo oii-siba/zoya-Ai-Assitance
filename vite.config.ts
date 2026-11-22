@@ -28,10 +28,21 @@ let lastSeenOrder = -1;
 // @ts-ignore
 import { directWhatsApp } from './scripts/whatsapp_baileys.mjs';
 
-function getContacts() {
+function getContacts(): Record<string, string> {
   if (fs.existsSync(CONTACTS_FILE)) {
     try {
-      return JSON.parse(fs.readFileSync(CONTACTS_FILE, 'utf8'));
+      const raw = JSON.parse(fs.readFileSync(CONTACTS_FILE, 'utf8'));
+      const clean: Record<string, string> = {};
+      for (const [k, v] of Object.entries(raw)) {
+        clean[k.toLowerCase().trim()] = String(v);
+        try {
+          const latin = Buffer.from(k, 'latin1').toString('utf8');
+          if (!latin.includes('\uFFFD') && latin !== k) {
+            clean[latin.toLowerCase().trim()] = String(v);
+          }
+        } catch (e) {}
+      }
+      return clean;
     } catch (e) {
       return {};
     }
@@ -797,12 +808,25 @@ function systemControlPlugin() {
               return;
             }
 
-            const directStatus = directWhatsApp.getStatus();
+            let directStatus = directWhatsApp.getStatus();
+            // If disconnected, try auto-connecting if credentials exist
+            if (!directStatus.connected) {
+              if (fs.existsSync(path.join(process.cwd(), 'whatsapp_auth', 'creds.json'))) {
+                console.log('[ZOYA SERVER] WhatsApp disconnected, attempting quick reconnect before sending...');
+                directWhatsApp.init().catch(() => {});
+                for (let attempt = 0; attempt < 8; attempt++) {
+                  await new Promise((r) => setTimeout(r, 500));
+                  directStatus = directWhatsApp.getStatus();
+                  if (directStatus.connected) break;
+                }
+              }
+            }
+
             if (!directStatus.connected) {
               res.statusCode = 400;
               res.end(JSON.stringify({
                 success: false,
-                error: 'Direct Mobile WhatsApp is not connected. Please connect via QR code in Zoya Settings.'
+                error: 'হোয়াটসঅ্যাপ সংযুক্ত নেই! অনুগ্রহ করে উপরের হোয়াটসঅ্যাপ আইকনে ক্লিক করে QR কোডটি স্ক্যান করে নিন।'
               }));
               return;
             }
@@ -819,7 +843,7 @@ function systemControlPlugin() {
 
             // Strip common suffixes (e.g. "সাহিলকে", "সাহিলকে বলো", "Sahil ke", "Sahil k", "Sahil da", "Sahil bhai")
             cleanSearchName = cleanSearchName
-              .replace(/\s*(কে\s*বলো|k\s*bolo|কে\s*বল|k\s*bol|কে\s*মেসেজ\s*পাঠাও|কে\s*মেসেজ\s*করো|k\s*message\s*pathao|k\s*message\s*koro|কে|ke|k|দা|da|দাদা|ভাই|bhai|ের|er)$/i, '')
+              .replace(/\s*(কে\s*বলো|k\s*bolo|কে\s*বল|k\s*bol|কে\s*মেসেজ\s*পাঠাও|কে\s*মেসেজ\s*করো|k\s*message\s*pathao|k\s*message\s*koro|কে\s*পাঠাও|কে\s*মেসেজ|কে|ke|k|দা|da|দাদা|ভাই|bhai|বাবু|babu|ের|er)$/i, '')
               .trim();
 
             const genericKeywords = [
@@ -885,7 +909,7 @@ function systemControlPlugin() {
               res.statusCode = 404;
               res.end(JSON.stringify({
                 success: false,
-                error: `Could not find phone number or contact for "${rawContact}". Please save contact or provide phone number.`
+                error: `"${rawContact || cleanSearchName}" নামে কোনো কন্টাক্ট বা ফোন নম্বর পাওয়া যায়নি। অনুগ্রহ করে নম্বরটি বলুন বা কন্টাক্ট সেভ করুন।`
               }));
               return;
             }
@@ -894,7 +918,7 @@ function systemControlPlugin() {
               console.log(`[ZOYA DIRECT WHATSAPP] Sending message directly via mobile connection to ${targetJid}: "${message}"`);
               let allSucceeded = true;
               let lastErr = '';
-              const AI_HEADER = "*This Message from Siba's Zoya AI Assistance !! it may be mistake*";
+              const AI_HEADER = "*This Message from Zoya AI Assistance !! it may be a mistake*";
               for (let i = 0; i < count; i++) {
                 const cleanMsg = (message || '').trim();
                 let textToSend = cleanMsg;
