@@ -646,7 +646,7 @@ export class LiveSession {
               },
               {
                 name: 'saveMemory',
-                description: 'Permanently saves a fact, preference, user rule, habit, or important detail into Zoya\'s permanent long-term memory. ALWAYS call this tool when the user asks you to remember something (e.g. "জয়া মনে রেখো...", "মনে রাখবে...", "আমার প্রিয় গান...", "আমার বন্ধু হলো...", "remember that..."), or when the user shares an important personal fact they want you to remember in future conversations. Then warmly confirm what you remembered in sweet Bengali.',
+                description: 'Permanently saves a fact, preference, user rule, habit, or important detail into Zoya\'s permanent long-term memory. Use this whenever Siba Boss explicitly says to remember something ("জয়া, মনে রেখো...", "মনে রাখবে...", "আমার প্রিয়...", "remember that..."), or when he gives consent ("হ্যাঁ, মনে রাখো") after you politely ask permission ("শিবা বস, এই কথাটা কি আমি মেমোরিতে সেভ করে রাখব?"). Then sweetly confirm: "হ্যাঁ শিবা বস, আমি মনে রাখলাম!"',
                 parameters: {
                   type: 'OBJECT',
                   properties: {
@@ -663,8 +663,22 @@ export class LiveSession {
                 },
               },
               {
+                name: 'forgetMemory',
+                description: 'Permanently forgets, deletes, or removes a specific fact from Zoya\'s permanent long-term memory when Siba Boss asks you to forget or erase something (e.g. "ওটা ভুলে যাও", "মেমোরি থেকে ডিলিট করো", "ওটা মনে রাখার দরকার নেই", "forget that..."). Sweetly confirm: "হ্যাঁ শিবা বস, আমি ভুলে গিয়েছি!"',
+                parameters: {
+                  type: 'OBJECT',
+                  properties: {
+                    query: {
+                      type: 'STRING',
+                      description: 'Keyword, fact text, or topic to forget/remove from memory.',
+                    },
+                  },
+                  required: ['query'],
+                },
+              },
+              {
                 name: 'deleteMemory',
-                description: 'Deletes or removes a specific fact from Zoya\'s permanent long-term memory when the user asks to forget or remove it (e.g. "ওটা ভুলে যাও", "মেমোরি থেকে ডিলিট করো", "forget that...").',
+                description: 'Alias of forgetMemory. Removes a specific fact from Zoya\'s permanent long-term memory.',
                 parameters: {
                   type: 'OBJECT',
                   properties: {
@@ -1682,14 +1696,14 @@ export class LiveSession {
       } catch (error) {
         this.sendToolResponse(call.id, { success: false, error: (error as Error).message });
       }
-    } else if (call.name === 'deleteMemory') {
+    } else if (call.name === 'forgetMemory' || call.name === 'deleteMemory') {
       try {
         const query = String(call.args.query || '').trim();
         if (!query) {
           this.sendToolResponse(call.id, { success: false, error: 'Query cannot be empty.' });
           return;
         }
-        const res = await this.callLocalControlApi('delete-memory', { query });
+        const res = await this.callLocalControlApi('forget-memory', { query });
         this.sendToolResponse(call.id, res);
         this.logStatus(`[Memory Engine] Removed memory matching: "${query}"`);
       } catch (error) {

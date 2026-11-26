@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, EyeOff, X, Save, Settings, Users, UserPlus, Trash2, MessageSquare, Lock, Mic, ShieldCheck, UserCheck, Activity, Smartphone, QrCode, RefreshCw, CheckCircle2, User, Sparkles, Brain, Bookmark } from 'lucide-react';
+import { Eye, EyeOff, X, Save, Settings, Users, UserPlus, Trash2, MessageSquare, Lock, Mic, ShieldCheck, UserCheck, Activity, Smartphone, QrCode, RefreshCw, CheckCircle2, User, Sparkles, Brain, Bookmark, Edit3 } from 'lucide-react';
 import type { LiveSessionConfig } from '../types/live';
 import { voiceBiometrics, type SpeakerProfile, type AcousticFeatures } from '../services/VoiceBiometrics';
 import {
@@ -240,6 +240,7 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
   const [memoryLoading, setMemoryLoading] = useState(false);
   const [newMemoryFact, setNewMemoryFact] = useState('');
   const [newMemoryCategory, setNewMemoryCategory] = useState('fact');
+  const [editingMemoryId, setEditingMemoryId] = useState<string | null>(null);
   const [memoryStatusMsg, setMemoryStatusMsg] = useState('');
 
   const fetchMemory = async () => {
@@ -259,23 +260,50 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
     }
   };
 
-  const handleAddMemory = async (e: React.FormEvent) => {
+  const handleStartEdit = (item: { id: string; text: string; category?: string }) => {
+    setEditingMemoryId(item.id);
+    setNewMemoryFact(item.text);
+    setNewMemoryCategory(item.category || 'fact');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMemoryId(null);
+    setNewMemoryFact('');
+    setNewMemoryCategory('fact');
+  };
+
+  const handleAddOrEditMemory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMemoryFact.trim()) return;
 
     try {
-      const res = await fetch('/api/memory/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fact: newMemoryFact.trim(), category: newMemoryCategory }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
+      if (editingMemoryId) {
+        const res = await fetch('/api/memory/edit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingMemoryId, text: newMemoryFact.trim(), category: newMemoryCategory }),
+        });
+        if (res.ok) {
+          setEditingMemoryId(null);
           setNewMemoryFact('');
-          setMemoryStatusMsg(`Saved to memory: "${newMemoryFact.trim()}"`);
+          setMemoryStatusMsg(`Updated memory item!`);
           setTimeout(() => setMemoryStatusMsg(''), 3000);
           fetchMemory();
+        }
+      } else {
+        const res = await fetch('/api/memory/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fact: newMemoryFact.trim(), category: newMemoryCategory }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            setNewMemoryFact('');
+            setMemoryStatusMsg(`Saved to memory: "${newMemoryFact.trim()}"`);
+            setTimeout(() => setMemoryStatusMsg(''), 3000);
+            fetchMemory();
+          }
         }
       }
     } catch (e: any) {
@@ -1651,11 +1679,23 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
               </div>
             </div>
 
-            {/* Add Memory Form */}
-            <form onSubmit={handleAddMemory} className="p-4 bg-neutral-950/50 border border-white/5 rounded-2xl space-y-3 shadow-md">
-              <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                <Bookmark className="w-4 h-4 text-purple-400" /> Add New Memory Item
-              </span>
+            {/* Add or Edit Memory Form */}
+            <form onSubmit={handleAddOrEditMemory} className="p-4 bg-neutral-950/50 border border-white/5 rounded-2xl space-y-3 shadow-md">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <Bookmark className="w-4 h-4 text-purple-400" />
+                  {editingMemoryId ? 'Edit Memory Item (মেমোরি সম্পাদনা করুন)' : 'Add New Memory Item'}
+                </span>
+                {editingMemoryId && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="text-[10px] text-neutral-400 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors"
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                 <input
                   type="text"
@@ -1681,7 +1721,7 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
                 disabled={!newMemoryFact.trim()}
                 className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white font-bold rounded-xl transition-all cursor-pointer text-xs uppercase shadow-md active:scale-95"
               >
-                Save To Memory (মেমোরিতে সেভ করুন)
+                {editingMemoryId ? 'Update Memory (মেমোরি আপডেট করুন)' : 'Save To Memory (মেমোরিতে সেভ করুন)'}
               </button>
             </form>
 
@@ -1722,14 +1762,24 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
                           )}
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteMemory(item.id, item.text)}
-                        className="p-1.5 rounded-lg text-neutral-500 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer shrink-0 opacity-80 group-hover:opacity-100"
-                        title="Delete this memory"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleStartEdit(item)}
+                          className="p-1.5 rounded-lg text-neutral-500 hover:text-purple-400 hover:bg-purple-500/10 transition-all cursor-pointer opacity-80 group-hover:opacity-100"
+                          title="Edit this memory"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteMemory(item.id, item.text)}
+                          className="p-1.5 rounded-lg text-neutral-500 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer opacity-80 group-hover:opacity-100"
+                          title="Delete this memory"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

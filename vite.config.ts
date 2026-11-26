@@ -792,13 +792,30 @@ function systemControlPlugin() {
             return;
           }
 
-          if (subPath === '/delete') {
+          if (subPath === '/delete' || subPath === '/forget') {
             const id = payload.id || parsedUrl.searchParams.get('id') || '';
             const text = payload.text || parsedUrl.searchParams.get('text') || '';
             const mem = getMemory();
             if (mem.facts) {
               mem.facts = mem.facts.filter(f => f.id !== id && (!text || !f.text.toLowerCase().includes(text.toLowerCase())));
               saveMemory(mem);
+            }
+            res.end(JSON.stringify({ success: true, memory: mem, formatted: formatMemoryForPrompt(mem) }));
+            return;
+          }
+
+          if (subPath === '/edit' || subPath === '/update') {
+            const id = payload.id || parsedUrl.searchParams.get('id') || '';
+            const text = payload.text || parsedUrl.searchParams.get('text') || '';
+            const category = payload.category || parsedUrl.searchParams.get('category') || 'fact';
+            const mem = getMemory();
+            if (mem.facts) {
+              const item = mem.facts.find(f => f.id === id);
+              if (item) {
+                if (text) item.text = String(text).trim();
+                if (category) item.category = String(category).trim();
+                saveMemory(mem);
+              }
             }
             res.end(JSON.stringify({ success: true, memory: mem, formatted: formatMemoryForPrompt(mem) }));
             return;
@@ -992,7 +1009,7 @@ function systemControlPlugin() {
             return;
           }
 
-          if (action === 'delete-memory') {
+          if (action === 'delete-memory' || action === 'forget-memory') {
             const query = payload.query || payload.id || urlObj.searchParams.get('query') || urlObj.searchParams.get('id') || '';
             if (!query) {
               res.statusCode = 400;
