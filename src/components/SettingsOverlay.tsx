@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, EyeOff, X, Save, Settings, Users, UserPlus, Trash2, MessageSquare, Lock, Mic, ShieldCheck, UserCheck, Activity, Smartphone, QrCode, RefreshCw, CheckCircle2, User, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, X, Save, Settings, Users, UserPlus, Trash2, MessageSquare, Lock, Mic, ShieldCheck, UserCheck, Activity, Smartphone, QrCode, RefreshCw, CheckCircle2, User, Sparkles, Brain, Bookmark } from 'lucide-react';
 import type { LiveSessionConfig } from '../types/live';
 import { voiceBiometrics, type SpeakerProfile, type AcousticFeatures } from '../services/VoiceBiometrics';
 import {
@@ -15,7 +15,7 @@ interface SettingsOverlayProps {
   config: LiveSessionConfig;
   onSave: (newConfig: LiveSessionConfig) => void;
   onTestNotification?: () => void;
-  initialTab?: 'settings' | 'whatsapp' | 'voicelock' | 'contacts';
+  initialTab?: 'settings' | 'whatsapp' | 'voicelock' | 'contacts' | 'memory';
 }
 
 export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
@@ -60,7 +60,7 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
   const [whatsappAlertSound, setWhatsappAlertSound] = useState(config.whatsappAlertSound || 'beep');
   const [whatsappIgnoreGroups, setWhatsappIgnoreGroups] = useState(config.whatsappIgnoreGroups || false);
 
-  const [activeTab, setActiveTab] = useState<'settings' | 'whatsapp' | 'voicelock' | 'contacts'>(initialTab || 'settings');
+  const [activeTab, setActiveTab] = useState<'settings' | 'whatsapp' | 'voicelock' | 'contacts' | 'memory'>(initialTab || 'settings');
 
   useEffect(() => {
     if (isOpen && initialTab) {
@@ -230,9 +230,80 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
   };
 
 
+  // Zoya Long-Term Memory State
+  const [memoryData, setMemoryData] = useState<{
+    userProfile?: any;
+    preferences?: any;
+    importantPeople?: any[];
+    facts?: Array<{ id: string; text: string; category?: string; date?: string }>;
+  }>({});
+  const [memoryLoading, setMemoryLoading] = useState(false);
+  const [newMemoryFact, setNewMemoryFact] = useState('');
+  const [newMemoryCategory, setNewMemoryCategory] = useState('fact');
+  const [memoryStatusMsg, setMemoryStatusMsg] = useState('');
+
+  const fetchMemory = async () => {
+    setMemoryLoading(true);
+    try {
+      const res = await fetch('/api/memory');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.memory) {
+          setMemoryData(data.memory);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch memory:', e);
+    } finally {
+      setMemoryLoading(false);
+    }
+  };
+
+  const handleAddMemory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMemoryFact.trim()) return;
+
+    try {
+      const res = await fetch('/api/memory/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fact: newMemoryFact.trim(), category: newMemoryCategory }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setNewMemoryFact('');
+          setMemoryStatusMsg(`Saved to memory: "${newMemoryFact.trim()}"`);
+          setTimeout(() => setMemoryStatusMsg(''), 3000);
+          fetchMemory();
+        }
+      }
+    } catch (e: any) {
+      setMemoryStatusMsg(`Error: ${e.message}`);
+    }
+  };
+
+  const handleDeleteMemory = async (id: string, text?: string) => {
+    try {
+      const res = await fetch('/api/memory/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, text }),
+      });
+      if (res.ok) {
+        setMemoryStatusMsg('Memory item removed');
+        setTimeout(() => setMemoryStatusMsg(''), 3000);
+        fetchMemory();
+      }
+    } catch (e: any) {
+      setMemoryStatusMsg(`Error: ${e.message}`);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       fetchContacts();
+      fetchMemory();
     }
   }, [isOpen]);
 
@@ -572,6 +643,18 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
           >
             <MessageSquare className="w-4 h-4" />
             WhatsApp
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('memory')}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold tracking-wider uppercase border-b-2 transition-all cursor-pointer ${
+              activeTab === 'memory'
+                ? 'border-purple-500 text-purple-400 bg-white/5'
+                : 'border-transparent text-neutral-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Brain className="w-4 h-4 text-pink-400" />
+            Memory
           </button>
           <button
             type="button"
@@ -1493,6 +1576,159 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
                         title="Delete Contact"
                       >
                         <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'memory' && (
+          <div className="p-6 space-y-6 overflow-y-auto max-h-[480px] custom-scrollbar">
+            {/* Header info card */}
+            <div className="p-4 bg-gradient-to-r from-purple-950/40 via-pink-950/30 to-neutral-950/60 border border-purple-500/30 rounded-2xl flex items-center justify-between shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600/30 to-pink-600/30 border border-pink-500/40 flex items-center justify-center shadow-[0_0_20px_rgba(236,72,153,0.3)]">
+                  <Brain className="w-6 h-6 text-pink-400 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    Persistent Long-Term Memory
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300">
+                      Local JSON
+                    </span>
+                  </h3>
+                  <p className="text-xs text-neutral-400">
+                    Zoya remembers these facts, preferences, and personal notes across all sessions.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={fetchMemory}
+                disabled={memoryLoading}
+                className="p-2.5 rounded-xl bg-neutral-900 border border-white/10 hover:border-purple-500/40 text-neutral-400 hover:text-white transition-all cursor-pointer shadow active:scale-95"
+                title="Refresh Memory"
+              >
+                <RefreshCw className={`w-4 h-4 ${memoryLoading ? 'animate-spin text-purple-400' : ''}`} />
+              </button>
+            </div>
+
+            {memoryStatusMsg && (
+              <div className="p-3 bg-purple-950/40 border border-purple-500/30 rounded-xl text-xs text-purple-300 animate-fadeIn flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{memoryStatusMsg}</span>
+              </div>
+            )}
+
+            {/* User Profile & Preferences Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="p-3.5 bg-neutral-950/40 border border-white/5 rounded-xl space-y-2">
+                <span className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-purple-400" /> Identity Profile
+                </span>
+                <div className="text-xs space-y-1 text-neutral-300">
+                  <p><b className="text-white">Name:</b> {memoryData.userProfile?.name || userName || 'Siba'}</p>
+                  <p><b className="text-white">Title:</b> {memoryData.userProfile?.title || userTitle || 'Boss'}</p>
+                  <p><b className="text-white">Role:</b> {memoryData.userProfile?.profession || 'Developer & Creator'}</p>
+                  <p><b className="text-white">Language:</b> {memoryData.userProfile?.preferredLanguage || 'Bengali & English'}</p>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-neutral-950/40 border border-white/5 rounded-xl space-y-2">
+                <span className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-pink-400" /> Preferences
+                </span>
+                <div className="text-xs space-y-1 text-neutral-300">
+                  <p><b className="text-white">Favorite Singer:</b> {memoryData.preferences?.favoriteSinger || 'Arijit Singh'}</p>
+                  <p><b className="text-white">Music Genre:</b> {memoryData.preferences?.favoriteMusicGenre || 'Melody / Romantic'}</p>
+                  {memoryData.preferences?.interests && (
+                    <p><b className="text-white">Interests:</b> {memoryData.preferences.interests.join(', ')}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Add Memory Form */}
+            <form onSubmit={handleAddMemory} className="p-4 bg-neutral-950/50 border border-white/5 rounded-2xl space-y-3 shadow-md">
+              <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <Bookmark className="w-4 h-4 text-purple-400" /> Add New Memory Item
+              </span>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                <input
+                  type="text"
+                  value={newMemoryFact}
+                  onChange={(e) => setNewMemoryFact(e.target.value)}
+                  placeholder="e.g. আমার প্রিয় গান অরিজিৎ সিং-এর কেশরিয়া"
+                  className="md:col-span-3 px-3 py-2 text-xs bg-neutral-900 border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-purple-500 font-sans"
+                />
+                <select
+                  value={newMemoryCategory}
+                  onChange={(e) => setNewMemoryCategory(e.target.value)}
+                  className="px-2 py-2 text-xs bg-neutral-900 border border-white/10 rounded-xl text-neutral-300 focus:outline-none focus:border-purple-500 cursor-pointer"
+                >
+                  <option value="fact">Fact (সাধারণ তথ্য)</option>
+                  <option value="preference">Preference (পছন্দ)</option>
+                  <option value="habit">Habit (অভ্যাস)</option>
+                  <option value="person">Person (পরিচিত জন)</option>
+                  <option value="reminder">Note (জরুরি নোট)</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                disabled={!newMemoryFact.trim()}
+                className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white font-bold rounded-xl transition-all cursor-pointer text-xs uppercase shadow-md active:scale-95"
+              >
+                Save To Memory (মেমোরিতে সেভ করুন)
+              </button>
+            </form>
+
+            {/* Remembered Facts List */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold tracking-wider text-neutral-300 uppercase flex items-center gap-2">
+                  Remembered Items ({memoryData.facts?.length || 0})
+                </h3>
+                <span className="text-[10px] text-neutral-500">
+                  You can also tell Zoya verbally: "জয়া মনে রেখো..."
+                </span>
+              </div>
+
+              {(!memoryData.facts || memoryData.facts.length === 0) ? (
+                <p className="text-xs text-neutral-500 text-center py-6 bg-neutral-950/30 rounded-xl border border-white/5">
+                  No memories saved yet. Speak to Zoya or add one above!
+                </p>
+              ) : (
+                <div className="max-h-56 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                  {memoryData.facts.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-start justify-between gap-3 p-3 border border-white/5 bg-neutral-950/40 rounded-xl hover:border-purple-500/30 transition-all group"
+                    >
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-xs text-neutral-200 leading-relaxed font-medium">
+                          {item.text}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300">
+                            {item.category || 'fact'}
+                          </span>
+                          {item.date && (
+                            <span className="text-[9px] font-mono text-neutral-500">
+                              {item.date}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteMemory(item.id, item.text)}
+                        className="p-1.5 rounded-lg text-neutral-500 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer shrink-0 opacity-80 group-hover:opacity-100"
+                        title="Delete this memory"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}

@@ -323,10 +323,10 @@ export class LiveSession {
 
       this.socket = new WebSocket(wssUrl);
 
-      this.socket.onopen = () => {
-        this.logStatus('WebSocket connection established. Sending setup payload...');
+      this.socket.onopen = async () => {
+        this.logStatus('WebSocket connection established. Sending setup payload with long-term memory...');
         this.reconnectAttempts = 0; // Reset count on successful open
-        this.sendSetupPayload();
+        await this.sendSetupPayload();
       };
 
       this.socket.onmessage = async (event) => {
@@ -431,8 +431,23 @@ export class LiveSession {
   /**
    * Sends the initial setup configuration.
    */
-  private sendSetupPayload(): void {
+  private async sendSetupPayload(): Promise<void> {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN || !this.config) return;
+
+    let memoryContext = '';
+    try {
+      const apiBase = (typeof window !== 'undefined' && window.location.origin && window.location.origin.startsWith('http'))
+        ? window.location.origin
+        : 'http://localhost:5174';
+      const memRes = await fetch(new URL('/api/memory', apiBase).toString()).catch(() => null);
+      if (memRes && memRes.ok) {
+        const memData = await memRes.json().catch(() => ({}));
+        if (memData && memData.formatted) {
+          memoryContext = `\n\n[ZOYA PERMANENT LONG-TERM MEMORY (ALWAYS REMEMBER & RESPECT THESE FACTS)]:\n${memData.formatted}\n`;
+          this.logStatus('Injected permanent long-term memory into Zoya system instructions.');
+        }
+      }
+    } catch (e) {}
 
     const setupPayload: OutgoingMessage = {
       setup: {
@@ -448,7 +463,7 @@ export class LiveSession {
           },
         },
         systemInstruction: {
-          parts: [{ text: this.config.systemInstruction }],
+          parts: [{ text: (this.config.systemInstruction || '') + memoryContext }],
         },
         tools: [
           {
@@ -627,6 +642,38 @@ export class LiveSession {
                     },
                   },
                   required: ['name', 'phone'],
+                },
+              },
+              {
+                name: 'saveMemory',
+                description: 'Permanently saves a fact, preference, user rule, habit, or important detail into Zoya\'s permanent long-term memory. ALWAYS call this tool when the user asks you to remember something (e.g. "জয়া মনে রেখো...", "মনে রাখবে...", "আমার প্রিয় গান...", "আমার বন্ধু হলো...", "remember that..."), or when the user shares an important personal fact they want you to remember in future conversations. Then warmly confirm what you remembered in sweet Bengali.',
+                parameters: {
+                  type: 'OBJECT',
+                  properties: {
+                    fact: {
+                      type: 'STRING',
+                      description: 'The fact, preference, or detail to permanently remember.',
+                    },
+                    category: {
+                      type: 'STRING',
+                      description: 'Optional category: "preference", "fact", "person", "habit", "reminder", or "identity". Defaults to "fact".',
+                    },
+                  },
+                  required: ['fact'],
+                },
+              },
+              {
+                name: 'deleteMemory',
+                description: 'Deletes or removes a specific fact from Zoya\'s permanent long-term memory when the user asks to forget or remove it (e.g. "ওটা ভুলে যাও", "মেমোরি থেকে ডিলিট করো", "forget that...").',
+                parameters: {
+                  type: 'OBJECT',
+                  properties: {
+                    query: {
+                      type: 'STRING',
+                      description: 'Keyword, fact text, or topic to remove from memory.',
+                    },
+                  },
+                  required: ['query'],
                 },
               },
               {
@@ -1618,6 +1665,33 @@ export class LiveSession {
           phone: phone,
         });
         this.sendToolResponse(call.id, res);
+      } catch (error) {
+        this.sendToolResponse(call.id, { success: false, error: (error as Error).message });
+      }
+    } else if (call.name === 'saveMemory') {
+      try {
+        const fact = String(call.args.fact || '').trim();
+        const category = String(call.args.category || 'fact').trim();
+        if (!fact) {
+          this.sendToolResponse(call.id, { success: false, error: 'Fact cannot be empty.' });
+          return;
+        }
+        const res = await this.callLocalControlApi('save-memory', { fact, category });
+        this.sendToolResponse(call.id, res);
+        this.logStatus(`[Memory Engine] Saved memory: "${fact}" (${category})`);
+      } catch (error) {
+        this.sendToolResponse(call.id, { success: false, error: (error as Error).message });
+      }
+    } else if (call.name === 'deleteMemory') {
+      try {
+        const query = String(call.args.query || '').trim();
+        if (!query) {
+          this.sendToolResponse(call.id, { success: false, error: 'Query cannot be empty.' });
+          return;
+        }
+        const res = await this.callLocalControlApi('delete-memory', { query });
+        this.sendToolResponse(call.id, res);
+        this.logStatus(`[Memory Engine] Removed memory matching: "${query}"`);
       } catch (error) {
         this.sendToolResponse(call.id, { success: false, error: (error as Error).message });
       }

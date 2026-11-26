@@ -23,6 +23,7 @@ whatsapp_auth/
 lid-mapping-*.json
 tctoken-*.json
 contacts.json
+memory.json
 
 # C# build artifacts
 scripts/*.dll

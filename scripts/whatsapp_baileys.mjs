@@ -204,7 +204,7 @@ export class WhatsAppDirectClient {
     this.lastConnectingTime = 0;
     this.reconnectTimer = null;
     this.watchdogInterval = null;
-    this.startWatchdog();
+    // Note: Do not auto-start watchdog in constructor to prevent hanging Vite builds
   }
 
   destroy() {
@@ -244,6 +244,9 @@ export class WhatsAppDirectClient {
         this.scheduleReconnect(5000);
       });
     }, delayMs);
+    if (this.reconnectTimer && typeof this.reconnectTimer.unref === 'function') {
+      this.reconnectTimer.unref();
+    }
   }
 
   startWatchdog() {
@@ -282,9 +285,13 @@ export class WhatsAppDirectClient {
         this.scheduleReconnect(2000);
       }
     }, 10000); // Check every 10s
+    if (this.watchdogInterval && typeof this.watchdogInterval.unref === 'function') {
+      this.watchdogInterval.unref();
+    }
   }
 
   async init(fresh = false) {
+    this.startWatchdog();
     if (this.isConnecting) return false;
     if (this.isReconnecting && !fresh) {
       console.log('[ZOYA WHATSAPP] Already waiting to reconnect, keeping backoff schedule.');

@@ -21,7 +21,81 @@ function getDesktopPath() {
 }
 
 const CONTACTS_FILE = path.join(process.cwd(), 'contacts.json');
+const MEMORY_FILE = path.join(process.cwd(), 'memory.json');
 let lastSeenOrder = -1;
+
+interface ZoyaMemory {
+  userProfile?: {
+    name?: string;
+    title?: string;
+    profession?: string;
+    preferredLanguage?: string;
+    [key: string]: any;
+  };
+  preferences?: {
+    favoriteSinger?: string;
+    favoriteMusicGenre?: string;
+    interests?: string[];
+    [key: string]: any;
+  };
+  importantPeople?: Array<{ name: string; relation: string; phone?: string }>;
+  facts?: Array<{ id: string; text: string; category?: string; date?: string }>;
+  [key: string]: any;
+}
+
+function getMemory(): ZoyaMemory {
+  if (fs.existsSync(MEMORY_FILE)) {
+    try {
+      return JSON.parse(fs.readFileSync(MEMORY_FILE, 'utf8'));
+    } catch (e) {
+      return {};
+    }
+  }
+  return {};
+}
+
+function saveMemory(mem: ZoyaMemory) {
+  try {
+    fs.writeFileSync(MEMORY_FILE, JSON.stringify(mem, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function formatMemoryForPrompt(mem: ZoyaMemory): string {
+  const parts: string[] = [];
+  if (mem.userProfile) {
+    const prof = mem.userProfile;
+    const profDetails: string[] = [];
+    if (prof.name) profDetails.push(`User Name: ${prof.name}`);
+    if (prof.title) profDetails.push(`Call as: ${prof.title}`);
+    if (prof.profession) profDetails.push(`Profession: ${prof.profession}`);
+    if (prof.preferredLanguage) profDetails.push(`Preferred Languages: ${prof.preferredLanguage}`);
+    if (profDetails.length > 0) {
+      parts.push(`USER IDENTITY & PROFILE:\n${profDetails.join('\n')}`);
+    }
+  }
+  if (mem.preferences) {
+    const pref = mem.preferences;
+    const prefDetails: string[] = [];
+    if (pref.favoriteSinger) prefDetails.push(`Favorite Singer / Artist: ${pref.favoriteSinger}`);
+    if (pref.favoriteMusicGenre) prefDetails.push(`Favorite Music Genre: ${pref.favoriteMusicGenre}`);
+    if (pref.interests && pref.interests.length > 0) prefDetails.push(`Interests: ${pref.interests.join(', ')}`);
+    if (prefDetails.length > 0) {
+      parts.push(`PREFERENCES & INTERESTS:\n${prefDetails.join('\n')}`);
+    }
+  }
+  if (mem.importantPeople && mem.importantPeople.length > 0) {
+    const people = mem.importantPeople.map(p => `- ${p.name} (${p.relation})`).join('\n');
+    parts.push(`IMPORTANT PEOPLE & FRIENDS:\n${people}`);
+  }
+  if (mem.facts && mem.facts.length > 0) {
+    const facts = mem.facts.map(f => `- ${f.text}${f.category ? ` [${f.category}]` : ''}`).join('\n');
+    parts.push(`REMEMBERED FACTS & PERMANENT MEMORY:\n${facts}`);
+  }
+  return parts.join('\n\n');
+}
 
 // Direct WhatsApp client (Baileys v5) - connects mobile without requiring desktop app
 // Optimized for persistent background connection with PID lock & zero 440 conflict
@@ -95,12 +169,18 @@ function runAutomation(args: Record<string, any>): Promise<{ success: boolean; o
   });
 }
 
+const isBuild = process.env.NODE_ENV === 'production' || 
+                process.argv.includes('build') || 
+                Boolean(process.env.npm_lifecycle_event && process.env.npm_lifecycle_event.includes('build')) ||
+                Boolean(process.env.VERCEL) ||
+                Boolean(process.env.CI);
+
 const FAST_CONTROL_EXE = path.join(process.cwd(), 'scripts', 'ZoyaFastControl.exe');
 let fastControlProcess: any = null;
 let fastControlPending: ((res: { success: boolean; output?: string; error?: string }) => void) | null = null;
 
-// Ensure FastControl exe is available
-if (!fs.existsSync(FAST_CONTROL_EXE)) {
+// Ensure FastControl exe is available (Windows local runtime only, skipped during build/CI/Linux)
+if (!isBuild && process.platform === 'win32' && !fs.existsSync(FAST_CONTROL_EXE)) {
   try {
     const buildScript = path.join(process.cwd(), 'scripts', 'build_fast_automate.cjs');
     if (fs.existsSync(buildScript)) {
@@ -110,6 +190,9 @@ if (!fs.existsSync(FAST_CONTROL_EXE)) {
 }
 
 function getFastControlProcess() {
+  if (isBuild || process.platform !== 'win32') {
+    return null;
+  }
   if (fastControlProcess && !fastControlProcess.killed && fastControlProcess.stdin && fastControlProcess.stdin.writable) {
     return fastControlProcess;
   }
@@ -121,6 +204,9 @@ function getFastControlProcess() {
       stdio: ['pipe', 'pipe', 'inherit'],
       windowsHide: true,
     });
+    if (fastControlProcess && typeof fastControlProcess.unref === 'function') {
+      fastControlProcess.unref();
+    }
     fastControlProcess.stdout.on('data', (data: Buffer) => {
       const text = data.toString().trim();
       if (text === 'READY') {
@@ -149,9 +235,6 @@ function getFastControlProcess() {
     return null;
   }
 }
-
-// Pre-warm the fast control daemon
-try { getFastControlProcess(); } catch (e) {}
 
 async function runFastControl(action: string): Promise<{ success: boolean; output?: string; error?: string }> {
   const p = getFastControlProcess();
@@ -652,6 +735,90 @@ function systemControlPlugin() {
           return;
         }
 
+        if (req.url && req.url.startsWith('/api/memory')) {
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+          if (req.method === 'OPTIONS') {
+            res.statusCode = 200;
+            res.end();
+            return;
+          }
+
+          let body = '';
+          if (req.method === 'POST') {
+            await new Promise<void>((resolve, reject) => {
+              req.on('data', (chunk: any) => { body += chunk.toString(); });
+              req.on('end', () => resolve());
+              req.on('error', (err: any) => reject(err));
+            });
+          }
+
+          let payload: Record<string, any> = {};
+          if (body) {
+            try { payload = JSON.parse(body); } catch (e) {}
+          }
+
+          const parsedUrl = new URL(req.url, 'http://localhost');
+          const subPath = parsedUrl.pathname.replace('/api/memory', '');
+
+          if (req.method === 'GET' || subPath === '/get' || subPath === '') {
+            const mem = getMemory();
+            res.end(JSON.stringify({ success: true, memory: mem, formatted: formatMemoryForPrompt(mem) }));
+            return;
+          }
+
+          if (subPath === '/add') {
+            const fact = payload.fact || parsedUrl.searchParams.get('fact') || '';
+            const category = payload.category || parsedUrl.searchParams.get('category') || 'general';
+            if (!fact) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ success: false, error: 'fact is required' }));
+              return;
+            }
+            const mem = getMemory();
+            if (!mem.facts) mem.facts = [];
+            const newFact = {
+              id: `fact_${Date.now()}`,
+              text: String(fact).trim(),
+              category: String(category).trim(),
+              date: new Date().toISOString().split('T')[0]
+            };
+            mem.facts.unshift(newFact);
+            saveMemory(mem);
+            res.end(JSON.stringify({ success: true, memory: mem, fact: newFact, formatted: formatMemoryForPrompt(mem) }));
+            return;
+          }
+
+          if (subPath === '/delete') {
+            const id = payload.id || parsedUrl.searchParams.get('id') || '';
+            const text = payload.text || parsedUrl.searchParams.get('text') || '';
+            const mem = getMemory();
+            if (mem.facts) {
+              mem.facts = mem.facts.filter(f => f.id !== id && (!text || !f.text.toLowerCase().includes(text.toLowerCase())));
+              saveMemory(mem);
+            }
+            res.end(JSON.stringify({ success: true, memory: mem, formatted: formatMemoryForPrompt(mem) }));
+            return;
+          }
+
+          if (subPath === '/update-profile') {
+            const mem = getMemory();
+            if (payload.userProfile) mem.userProfile = { ...mem.userProfile, ...payload.userProfile };
+            if (payload.preferences) mem.preferences = { ...mem.preferences, ...payload.preferences };
+            if (payload.importantPeople) mem.importantPeople = payload.importantPeople;
+            saveMemory(mem);
+            res.end(JSON.stringify({ success: true, memory: mem, formatted: formatMemoryForPrompt(mem) }));
+            return;
+          }
+
+          res.statusCode = 404;
+          res.end(JSON.stringify({ success: false, error: 'Not found' }));
+          return;
+        }
+
         if (req.url && req.url.startsWith('/api/control')) {
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Access-Control-Allow-Origin', '*');
@@ -794,6 +961,54 @@ function systemControlPlugin() {
             delete contacts[name.toLowerCase().trim()];
             saveContacts(contacts);
             res.end(JSON.stringify({ success: true, message: `Deleted contact ${name}` }));
+            return;
+          }
+
+          if (action === 'get-memory') {
+            const mem = getMemory();
+            res.end(JSON.stringify({ success: true, memory: mem, formatted: formatMemoryForPrompt(mem) }));
+            return;
+          }
+
+          if (action === 'save-memory') {
+            const fact = payload.fact || urlObj.searchParams.get('fact') || '';
+            const category = payload.category || urlObj.searchParams.get('category') || 'fact';
+            if (!fact) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ success: false, error: 'fact is required' }));
+              return;
+            }
+            const mem = getMemory();
+            if (!mem.facts) mem.facts = [];
+            const newFact = {
+              id: `fact_${Date.now()}`,
+              text: String(fact).trim(),
+              category: String(category).trim(),
+              date: new Date().toISOString().split('T')[0]
+            };
+            mem.facts.unshift(newFact);
+            saveMemory(mem);
+            res.end(JSON.stringify({ success: true, message: `Successfully remembered: "${fact}"`, fact: newFact }));
+            return;
+          }
+
+          if (action === 'delete-memory') {
+            const query = payload.query || payload.id || urlObj.searchParams.get('query') || urlObj.searchParams.get('id') || '';
+            if (!query) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ success: false, error: 'query or id is required' }));
+              return;
+            }
+            const mem = getMemory();
+            if (mem.facts) {
+              const qLower = String(query).toLowerCase().trim();
+              const beforeCount = mem.facts.length;
+              mem.facts = mem.facts.filter(f => f.id !== query && !f.text.toLowerCase().includes(qLower));
+              saveMemory(mem);
+              res.end(JSON.stringify({ success: true, message: `Removed memory item matching: "${query}"`, removed: beforeCount - mem.facts.length }));
+              return;
+            }
+            res.end(JSON.stringify({ success: true, message: 'No memories to remove' }));
             return;
           }
 

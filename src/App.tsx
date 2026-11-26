@@ -100,6 +100,8 @@ const DEFAULT_INSTRUCTION =
   "   - CRITICAL: DO NOT ask 'কী মেসেজ পাঠাবো'! Do NOT ask any questions! " +
   "   - IMMEDIATELY after speaking who sent what message, GO RIGHT BACK TO SILENT STANDBY MODE (তারপরেই চুপ হয়ে যান)! Remain completely silent and do not respond to any conversation in the room until Siba Boss explicitly says 'zoya bolo' (জোয়া বলো)! " +
   "- addContact: Call this if the user gives you a phone number for a name to save to contacts so you can message them by name later. " +
+  "- saveMemory: Call this immediately when the user asks you to remember something (e.g. 'zoya mone rekho...', 'mone rakhbe...', 'amar priyo gaan...', 'amar bondhu...', 'remember that...'), or shares an important personal fact, preference, or habit. Sweetly confirm: 'হ্যাঁ শিবা বস, আমি মনে রাখলাম!' " +
+  "- deleteMemory: Call this when the user asks to forget or remove a memory item. Sweetly confirm: 'হ্যাঁ শিবা বস, মেমোরি থেকে মুছে দিয়েছি!' " +
   "- getCurrentTime: Call this immediately if the user asks for the current time, date, day, month, or year. Always query this tool to check the correct local time of Siba Boss's PC. " +
   "- readWebpage: Call this immediately if Siba Boss pastes a link and asks you to create a website similar to it, analyze it, or copy its layout. It takes a 'url' parameter and returns the cleaned text content of that URL. " +
   "FULL LAPTOP PERMISSION & TOTAL COMPREHENSIVE LAPTOP OS & HARDWARE CONTROL (YOUTUBE_CLICK_PLAY_V5): You have 100% full, unrestricted permission and control over Siba Boss's laptop! Whatever Siba Boss asks you to do on his computer, you can and MUST do it using your automation tools: " +
@@ -266,7 +268,7 @@ function App() {
   const [sessionState, setSessionState] = useState<SessionState>('disconnected');
   const [statusMessage, setStatusMessage] = useState<string>('Ready to start Zoya session.');
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [settingsTab, setSettingsTab] = useState<'settings' | 'whatsapp' | 'voicelock' | 'contacts'>('settings');
+  const [settingsTab, setSettingsTab] = useState<'settings' | 'whatsapp' | 'voicelock' | 'contacts' | 'memory'>('settings');
   const [isWaConnected, setIsWaConnected] = useState<boolean>(false);
   const [lastToolCall, setLastToolCall] = useState<string | null>(null);
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
@@ -569,6 +571,16 @@ function App() {
       } else if (msg.includes('হোয়াটসঅ্যাপ সংযুক্ত নেই') || msg.includes('Direct Mobile WhatsApp is not connected')) {
         setLastToolCall('⚠️ হোয়াটসঅ্যাপ সংযুক্ত নেই! উপরের সবুজ আইকনে ক্লিক করে QR স্ক্যান করুন।');
         setTimeout(() => setLastToolCall(null), 7000);
+      } else if (msg.includes('Executing tool call: saveMemory')) {
+        const match = msg.match(/"fact":"([^"]+)"/);
+        const fact = match ? match[1] : 'fact';
+        setLastToolCall(`🧠 Memory Saved: "${fact}"`);
+        setTimeout(() => setLastToolCall(null), 5000);
+      } else if (msg.includes('Executing tool call: deleteMemory')) {
+        const match = msg.match(/"query":"([^"]+)"/);
+        const q = match ? match[1] : 'item';
+        setLastToolCall(`🗑️ Memory Removed: "${q}"`);
+        setTimeout(() => setLastToolCall(null), 5000);
       } else if (msg.includes('Executing tool call: addContact')) {
         const match = msg.match(/"name":"([^"]+)"/);
         const name = match ? match[1] : 'contact';
